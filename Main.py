@@ -43,7 +43,9 @@
 # Import Modules
 #
 ###############################################################################
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image 
+# pytesseract import module should be modified if 'Image has no attribute Image' appears.
+
 import pytesseract
 import cv2
 import numpy as np
@@ -89,10 +91,10 @@ kernel_morph = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5, 5))
 
 closed = cv2.morphologyEx(thresh_copy, cv2.MORPH_CLOSE, kernel_morph) 
 
-kernel_dilate = np.uint8(np.ones((6,7)))
+kernel_dilate = np.uint8(np.ones((8,10)))
 kernel_dilate[3,:]=0
 
-closed = cv2.dilate(closed, kernel_dilate, 1)
+closed = cv2.dilate(closed, kernel_dilate, 5)
 
 #blurred = cv2.GaussianBlur(closed, (9, 9),0) # Gaussian Blur reduce noise
 blurred = closed
@@ -105,7 +107,8 @@ c = sorted(cnts, key=cv2.contourArea, reverse=True)
 
 thresh_cover = cv2.bitwise_not(thresh)
 
-Search_Region_Coordinates = np.int0(np.zeros((len(c),4)))
+Search_Region_Coordinates = np.int0(np.zeros((1,4)))
+
 
 for i in range(len(c)):
     
@@ -121,18 +124,26 @@ for i in range(len(c)):
     y1 = (min(Ys) + abs(min(Ys)))/2
     y2 = max(Ys) if max(Ys) <= h else h
     
-    
-
     box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])
+    corner = np.int0([[x1,y1,x2,y2]])
     
-    Search_Region_Coordinates[i][:4] = np.int0([x1,y1,x2,y2])  # Search Region Box Coordinates
+    if i == 0:
+        
+        Search_Region_Coordinates[i][:4] = corner
     
-    
-    draw_img = cv2.drawContours(img_initial, [box], -1, (0, 0, 255), 3)
+    else:
+        
+        if abs(x1-x2) >= 2 and abs(y1-y2) >= 2 :
+        
+            Search_Region_Coordinates = np.append(Search_Region_Coordinates, corner)
+            
+            draw_img = cv2.drawContours(img_initial, [box], -1, (0, 0, 255), 3)
+        
     
 cv2.imshow("blurred",blurred)      
 
 cv2.imshow("draw_img", img_initial)
+cv2.waitKey()
 
 ###############################################################################
 
@@ -142,10 +153,11 @@ cv2.imshow("draw_img", img_initial)
 #
 # Problem (22.06.2018): 
 # 1. Efficiency seems a little bit low -> New algroithm need to be developed;
-# 2. Comparision between Selection and Destination keyword need a more robust approch.
+# 2. Comparision between Selection and Destination keyword need a more robust
+#    approch.
 #
 ###############################################################################
-
+'''
 Target_Keyword = 'More'
 
 for i in range(len(Search_Region_Coordinates)):
@@ -175,19 +187,40 @@ for i in range(len(Search_Region_Coordinates)):
     #plt.pause(5)
     #plt.close()
     
-
-
-  
+'''
 ###############################################################################
 
+###############################################################################
+#
+# SLED TESTING RECORDING (26.06.2018)
+#
+# Ideas: 
+# 1. Record the mouse event and coordinates -> Capture the image and text:
+# 2. OCR the sequecence image and text -> Recover the mouse and coordinates;
+# 3. Capture the result image -> Manually comparasion.
+#
+# Comment:
+# 1. Semi-Automation may be a good start of whole automation testing, cause it
+#    seems easier to realize.
+# 2. Search speed is much faster than whole automation testing.
+# 3. Easy application.
+#
+#
+###############################################################################
+
+## Screen capture
+
+#from PIL import ImageGrab
+#pic = ImageGrab.grab()
+#pic.save('1.jpg')
+
+# PyHooK module listen mouse&keyboard event. - need install SWIG
 
 
 
 
 
-
-
-
+###############################################################################
 
 
 
