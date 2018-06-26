@@ -61,7 +61,7 @@ pytesseract.pytesseract.tesseract_cmd = 'E:\\Development\\Tesseract-OCR\\tessera
 #
 ###############################################################################
 
-Operation_Image = 'Image\\Search1.png'
+Operation_Image = 'Image\\Search.png'
 
 img_initial = cv2.imread(Operation_Image)
 
@@ -157,8 +157,16 @@ cv2.waitKey()
 #    approch.
 #
 ###############################################################################
-'''
-Target_Keyword = 'More'
+import pyautogui
+import win32gui # OCR combined with win32 get handler and position.
+
+label = 'NX 1847.1400 / Analysis_nx13.226' 
+
+hld = win32gui.FindWindow(None, label)
+
+
+
+Target_Keyword = 'Open'
 
 for i in range(len(Search_Region_Coordinates)):
     
@@ -175,10 +183,11 @@ for i in range(len(Search_Region_Coordinates)):
     
     OCR_string = pytesseract.image_to_string(crop_img)
     
-    if Levenshtein.ratio(OCR_string, Target_Keyword)<1:
-        print(OCR_string)
-        print(i)
-        cv2.imwrite('icon\\icon'+str(i)+'.png',thresh_cover[y1:y1+hight, x1:x1+width])
+    if Levenshtein.ratio(OCR_string, Target_Keyword)>0.6:
+        #print(OCR_string)
+        #print(i)
+        #cv2.imwrite('icon\\icon'+str(i)+'.png',thresh_cover[y1:y1+hight, x1:x1+width])
+        break
         
 
     #plt.ion()
@@ -187,7 +196,7 @@ for i in range(len(Search_Region_Coordinates)):
     #plt.pause(5)
     #plt.close()
     
-'''
+
 ###############################################################################
 
 ###############################################################################
@@ -211,6 +220,12 @@ for i in range(len(Search_Region_Coordinates)):
 ## Screen capture
 
 #from PIL import ImageGrab
+#import pyautogui
+
+#print(pyautogui.position())
+
+#im = pyautogui.screenshot()
+#plt.imshow(im)
 #pic = ImageGrab.grab()
 #pic.save('1.jpg')
 
