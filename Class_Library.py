@@ -139,8 +139,57 @@ class Image_Segmentation(object):
 
 ###############################################################################
         
-import pyautogui
-import win32gui # OCR combined with win32 get handler and position.
+###############################################################################
+#
+# Image Segmentation -> Search Regions (22.06.2018)
+#
+###############################################################################    
+    
+class Window_Capture(object):
+    
+    def __init__(self,title):
+        
+        self.title = title
+        
+    def Handle_Catch(self,hwnd,lParam):
+        
+        if win32gui.IsWindowVisible(hwnd):
+            
+            if self.title in win32gui.GetWindowText(hwnd):
+                
+                self.handle = hwnd
+                
+            else:
+                
+                self.handle = None
+   
+    def Image_Capture(self):
+        
+        win32gui.EnumWindows(a.Handle_Catch, None)
+        
+        if self.handle == None:
+            
+            print('No Window Found!')
+            
+        else:
+            
+            win32gui.SetForegroundWindow(self.handle)
+            bbox = win32gui.GetWindowRect(self.handle)
+            img = ImageGrab.grab(bbox)
+            img.show()
+    
+        
+                
+
+a = Window_Capture('sasdfasdfs')
+
+        
+        
+        
+
+
+
+###############################################################################        
 
 a = Image_Segmentation('Image\\Search.png')
 
@@ -187,6 +236,18 @@ for i in range(len(b)):
             pyautogui.click()  
             break
     
+    
+
+tempWindowName=win32gui.GetWindowText (win32gui.GetForegroundWindow())
+import time
+while True:
+    if (tempWindowName==win32gui.GetWindowText (win32gui.GetForegroundWindow()))
+        pass
+    else
+        tempWindowName=win32gui.GetWindowText (win32gui.GetForegroundWindow())
+        #do what you want
+    time.sleep(0.1)
+
     
         
 a = Image_Segmentation('Image\\Search.png')
