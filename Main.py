@@ -91,7 +91,7 @@ kernel_morph = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5, 5))
 
 closed = cv2.morphologyEx(thresh_copy, cv2.MORPH_CLOSE, kernel_morph) 
 
-kernel_dilate = np.uint8(np.ones((8,10)))
+kernel_dilate = np.uint8(np.ones((6,7)))
 kernel_dilate[3,:]=0
 
 closed = cv2.dilate(closed, kernel_dilate, 5)
@@ -135,15 +135,15 @@ for i in range(len(c)):
         
         if abs(x1-x2) >= 2 and abs(y1-y2) >= 2 :
         
-            Search_Region_Coordinates = np.append(Search_Region_Coordinates, corner)
+            Search_Region_Coordinates = np.append(Search_Region_Coordinates, corner,axis = 0)
             
             draw_img = cv2.drawContours(img_initial, [box], -1, (0, 0, 255), 3)
         
     
-cv2.imshow("blurred",blurred)      
+#cv2.imshow("blurred",blurred)      
 
-cv2.imshow("draw_img", img_initial)
-cv2.waitKey()
+#cv2.imshow("draw_img", img_initial)
+#cv2.waitKey()
 
 ###############################################################################
 
@@ -157,6 +157,8 @@ cv2.waitKey()
 #    approch.
 #
 ###############################################################################
+            
+            
 import pyautogui
 import win32gui # OCR combined with win32 get handler and position.
 
@@ -164,30 +166,42 @@ label = 'NX 1847.1400 / Analysis_nx13.226'
 
 hld = win32gui.FindWindow(None, label)
 
+#Tab_handle = win32gui.FindWindowEx(win32gui.FindWindow('#32770','???????V7.35'),None,'SysTabControl32','Tab1')
 
+left, top, right, bottom = win32gui.GetWindowRect(hld)
 
 Target_Keyword = 'Open'
 
 for i in range(len(Search_Region_Coordinates)):
     
-    x1 = Search_Region_Coordinates[i][0]
-    y1 = Search_Region_Coordinates[i][1]
-    x2 = Search_Region_Coordinates[i][2]
-    y2 = Search_Region_Coordinates[i][3]
+    if Search_Region_Coordinates[i][0]>=544 or Search_Region_Coordinates[i][1]>=163:
+        
+        continue
     
-    hight = y2-y1
-    width = x2-x1
+    else:
     
-    
-    crop_img= Image.fromarray(thresh_cover[y1:y1+hight, x1:x1+width])
-    
-    OCR_string = pytesseract.image_to_string(crop_img)
-    
-    if Levenshtein.ratio(OCR_string, Target_Keyword)>0.6:
-        #print(OCR_string)
-        #print(i)
-        #cv2.imwrite('icon\\icon'+str(i)+'.png',thresh_cover[y1:y1+hight, x1:x1+width])
-        break
+        x1 = Search_Region_Coordinates[i][0]
+        y1 = Search_Region_Coordinates[i][1]
+        x2 = Search_Region_Coordinates[i][2]
+        y2 = Search_Region_Coordinates[i][3]
+        
+        hight = y2-y1
+        width = x2-x1
+        
+        
+        crop_img= thresh_cover[y1:y1+hight, x1:x1+width]
+        
+        OCR_string = pytesseract.image_to_string(crop_img)
+        
+        print(OCR_string)
+        
+        if Levenshtein.ratio(OCR_string, Target_Keyword)>0.8:
+            #print(OCR_string)
+            #print(i)
+            #cv2.imwrite('icon\\icon'+str(i)+'.png',thresh_cover[y1:y1+hight, x1:x1+width])
+            pyautogui.moveTo(left+x1+abs(x2-x1)/2, top+y1+abs(y2-y1)/2)
+            pyautogui.click()  
+            break
         
 
     #plt.ion()
@@ -231,12 +245,7 @@ for i in range(len(Search_Region_Coordinates)):
 
 # PyHooK module listen mouse&keyboard event. - need install SWIG
 
-
-
-
-
 ###############################################################################
-
 
 
 
