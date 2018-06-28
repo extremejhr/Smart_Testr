@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Thu Jun 28 15:59:03 2018
+
+@author: xqk9qq
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Wed Jun 27 12:29:34 2018
 
 @author: xqk9qq
@@ -92,11 +99,11 @@ class Image_Segmentation(object):
             
         if Morph_kernel is None:
             
-            Morph_kernel = (4,2)  
+            Morph_kernel = (2,2)  
             
         if Binary_Threshold is None:
             
-            Binary_Threshold = 220               
+            Binary_Threshold = 180               
                    
         #self.img_initial = cv2.imread(self.Operation_Image)
         
@@ -130,7 +137,7 @@ class Image_Segmentation(object):
         
         closed = cv2.morphologyEx(thresh_copy, cv2.MORPH_CLOSE, kernel_morph) 
         
-        kernel_dilate = np.uint8(np.ones((3,5)))
+        kernel_dilate = np.uint8(np.ones((3,6)))
         kernel_dilate[1,:]=0
         
         closed = cv2.dilate(closed, kernel_dilate, 1)
@@ -178,7 +185,7 @@ class Image_Segmentation(object):
                 
                     Search_Region_Coordinates = np.append(Search_Region_Coordinates, corner,axis = 0)
                     
-                    draw_img = cv2.drawContours(self.img_initial, [box], -1, (0, 0, 255), 3)
+                    draw_img = cv2.drawContours(self.img_initial, [box], -1, (0, 0, 255), 1)
                     
         
         if plot_flag is True:            
@@ -228,24 +235,28 @@ class Operation_Location(object):
             #cv2.imshow('',crop_img1)
             #cv2.waitKey()
                 
-            OCR_string = pytesseract.image_to_string(crop_img)
+            OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img))
             
-            cv2.imwrite('icon\\icon'+str(i)+'.png', crop_img)
+            
             
             if len(OCR_string) == 0:
                 
                 OCR_string = pytesseract.image_to_string(crop_img1)
+                cv2.imwrite('icon1\\icon'+str(i)+'.png', crop_img)
                 
-            print(OCR_string)
+            else:
                 
-            if Levenshtein.ratio(OCR_string, self.Target_Keyword)>0.8:
+                print(OCR_string)
+                cv2.imwrite('icon\\icon'+str(i)+'.png', crop_img)
+                
+            if Levenshtein.ratio(OCR_string, self.Target_Keyword)>0.6:
                 pyautogui.moveTo(left+x1+abs(x2-x1)/2, top+y1+abs(y2-y1)/2)
                 pyautogui.click()  
                 break        
             
 ###############################################################################     
 
-lable = ['Load']
+lable = ['Internal']
 
 wintext = ['NX 1847']
 
@@ -261,7 +272,7 @@ for i in range(len(lable)) :
     
     regions, img_processed = img_process.Get_Region(plot_flag=True)
     
-    e = Operation_Location(regions,img_processed,hwnd,lable[i])
+    e = Operation_Location(regions,img_processed ,hwnd,lable[i])
     
     e.Get_Location()
     
