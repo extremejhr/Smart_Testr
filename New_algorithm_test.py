@@ -165,15 +165,25 @@ class Image_Segmentation(object):
             box = np.int0(cv2.boxPoints(rect))
             
             Xs = [i[0] for i in box]
-            Ys = [i[1] for i in box]
+            Ys = [i[1] for i in box]            
             
             x1 = (min(Xs) + abs(min(Xs)))/2
             x2 = max(Xs) if max(Xs) <= w else w
             y1 = (min(Ys) + abs(min(Ys)))/2
             y2 = max(Ys) if max(Ys) <= h else h
             
+            h1 = y2 - y1
+            w1 = x2 - x1
+            
             box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])
-            corner = np.int0([[x1,y1,x2,y2]])
+            
+            if (x1 - w1*0.1) >= 0 and (y1 - h1*0.1) >= 0:
+            
+                corner = np.int0([[(x1 - w1*0),(y1 - h1*0.1),(x2 + w1*0),(y2 + h1*0.1)]])
+            
+            else:
+                
+                corner = np.int0([[0,0,(x2 + w1*0.1),(y2 + h1*0.1)]])
             
             if i == 0:
                 
@@ -256,9 +266,9 @@ class Operation_Location(object):
             
 ###############################################################################     
 
-lable = ['Internal']
+lable = ['Internal', 'Autotest']
 
-wintext = ['NX 1847']
+wintext = ['NX 1847','NX 1847']
 
 
 
@@ -270,7 +280,7 @@ for i in range(len(lable)) :
     
     img_process = Image_Segmentation(img_initial)
     
-    regions, img_processed = img_process.Get_Region(plot_flag=True)
+    regions, img_processed = img_process.Get_Region(plot_flag=False)
     
     e = Operation_Location(regions,img_processed ,hwnd,lable[i])
     
