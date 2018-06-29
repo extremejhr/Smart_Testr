@@ -155,8 +155,8 @@ class Image_Segmentation(object):
         
         Search_Region_Coordinates = np.int0(np.zeros((1,4)))
         
-        #cv2.imshow('ss',blurred)
-        #cv2.waitKey()
+        cv2.imshow('ss',blurred)
+        cv2.waitKey()
         
         for i in range(len(c)):
             
@@ -175,15 +175,17 @@ class Image_Segmentation(object):
             h1 = y2 - y1
             w1 = x2 - x1
             
+            scale = 0.5
+            
             box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])
             
-            if (x1 - w1*0.1) >= 0 and (y1 - h1*0.1) >= 0:
+            if (x1 - w1*scale) >= 0 and (y1 - h1*scale) >= 0:
             
-                corner = np.int0([[(x1 - w1*0),(y1 - h1*0.1),(x2 + w1*0),(y2 + h1*0.1)]])
+                corner = np.int0([[(x1 - w1*scale),(y1 - h1*scale),(x2 + w1*scale),(y2 + h1*scale)]])
             
             else:
                 
-                corner = np.int0([[0,0,(x2 + w1*0.1),(y2 + h1*0.1)]])
+                corner = np.int0([[0,0,(x2 + w1*scale),(y2 + h1*scale)]])
             
             if i == 0:
                 
@@ -191,7 +193,7 @@ class Image_Segmentation(object):
             
             else:
                 
-                if abs(x1-x2) >= 2 and abs(y1-y2) >= 2 :
+                if h1*w1 < 5000 and h1*w1 > 50 :
                 
                     Search_Region_Coordinates = np.append(Search_Region_Coordinates, corner,axis = 0)
                     
@@ -240,7 +242,8 @@ class Operation_Location(object):
                 
             crop_img = self.Image[y1:y1+hight, x1:x1+width]
             
-            crop_img1 = cv2.bitwise_not(crop_img[int(0.05*hight):int(0.95*hight),int(0.06*width):int(0.94*width)])
+
+            crop_img1 = cv2.bitwise_not(crop_img[int(0.05*hight):int(0.95*hight),int(0.1*width):int(0.9*width)])
             
             #cv2.imshow('',crop_img1)
             #cv2.waitKey()
@@ -266,9 +269,9 @@ class Operation_Location(object):
             
 ###############################################################################     
 
-lable = ['Internal', 'Autotest']
+lable = ['Close']
 
-wintext = ['NX 1847','NX 1847']
+wintext = ['Physical']
 
 
 
@@ -280,7 +283,7 @@ for i in range(len(lable)) :
     
     img_process = Image_Segmentation(img_initial)
     
-    regions, img_processed = img_process.Get_Region(plot_flag=False)
+    regions, img_processed = img_process.Get_Region(plot_flag=True)
     
     e = Operation_Location(regions,img_processed ,hwnd,lable[i])
     
