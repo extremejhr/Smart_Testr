@@ -103,7 +103,7 @@ class Image_Segmentation(object):
             
         if Binary_Threshold is None:
             
-            Binary_Threshold = 180               
+            Binary_Threshold = 150               
                    
         #self.img_initial = cv2.imread(self.Operation_Image)
         
@@ -138,7 +138,7 @@ class Image_Segmentation(object):
         closed = cv2.morphologyEx(thresh_copy, cv2.MORPH_CLOSE, kernel_morph) 
         
         kernel_dilate = np.uint8(np.ones((3,6)))
-        kernel_dilate[1,:]=0
+        kernel_dilate[:,:]=0
         
         closed = cv2.dilate(closed, kernel_dilate, 1)
         
@@ -155,8 +155,8 @@ class Image_Segmentation(object):
         
         Search_Region_Coordinates = np.int0(np.zeros((1,4)))
         
-        cv2.imshow('ss',blurred)
-        cv2.waitKey()
+        #cv2.imshow('ss',blurred)
+        #cv2.waitKey()
         
         for i in range(len(c)):
             
@@ -175,17 +175,19 @@ class Image_Segmentation(object):
             h1 = y2 - y1
             w1 = x2 - x1
             
-            scale = 0.5
+            ratio = abs(h1/w1) if abs(h1/w1)>=1 else abs(w1/h1)
+            
+            scale = 0.1
             
             box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])
             
             if (x1 - w1*scale) >= 0 and (y1 - h1*scale) >= 0:
             
-                corner = np.int0([[(x1 - w1*scale),(y1 - h1*scale),(x2 + w1*scale),(y2 + h1*scale)]])
+                corner = np.int0([[(x1),(y1),(x2 + w1*scale),(y2 + h1*scale)]])
             
             else:
                 
-                corner = np.int0([[0,0,(x2 + w1*scale),(y2 + h1*scale)]])
+                corner = np.int0([[x1,y1,(x2 + w1*scale),(y2 + h1*scale)]])
             
             if i == 0:
                 
@@ -193,7 +195,7 @@ class Image_Segmentation(object):
             
             else:
                 
-                if h1*w1 < 5000 and h1*w1 > 50 :
+                if abs(h1*w1) < 5000 and abs(h1*w1) > 10 and ratio <= 20 :
                 
                     Search_Region_Coordinates = np.append(Search_Region_Coordinates, corner,axis = 0)
                     
@@ -201,7 +203,7 @@ class Image_Segmentation(object):
                     
         
         if plot_flag is True:            
-        #cv2.imshow("blurred",blurred)      
+            cv2.imshow("blurred",blurred)      
             cv2.imshow("draw_img", self.img_initial)
             cv2.waitKey()            
             
@@ -252,9 +254,9 @@ class Operation_Location(object):
             
             
             
-            if len(OCR_string) == 0:
-                
-                OCR_string = pytesseract.image_to_string(crop_img1)
+            if len(OCR_string) == 0 or OCR_string.isspace():
+                print('void')
+                #OCR_string = pytesseract.image_to_string(crop_img1)
                 cv2.imwrite('icon1\\icon'+str(i)+'.png', crop_img)
                 
             else:
@@ -271,7 +273,7 @@ class Operation_Location(object):
 
 lable = ['Close']
 
-wintext = ['Physical']
+wintext = ['NX 1847']
 
 
 
