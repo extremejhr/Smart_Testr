@@ -103,7 +103,7 @@ class Image_Segmentation(object):
             
         if Binary_Threshold is None:
             
-            Binary_Threshold = 150               
+            Binary_Threshold = 180               
                    
         #self.img_initial = cv2.imread(self.Operation_Image)
         
@@ -138,7 +138,7 @@ class Image_Segmentation(object):
         closed = cv2.morphologyEx(thresh_copy, cv2.MORPH_CLOSE, kernel_morph) 
         
         kernel_dilate = np.uint8(np.ones((3,6)))
-        kernel_dilate[:,:]=0
+        kernel_dilate[1,:]=0
         
         closed = cv2.dilate(closed, kernel_dilate, 1)
         
@@ -199,16 +199,97 @@ class Image_Segmentation(object):
                 
                     Search_Region_Coordinates = np.append(Search_Region_Coordinates, corner,axis = 0)
                     
-                    draw_img = cv2.drawContours(self.img_initial, [box], -1, (0, 0, 255), 1)
+                    #draw_img = cv2.drawContours(self.img_initial, [box], -1, (0, 0, 255), 1)
                     
-        
         if plot_flag is True:            
-            cv2.imshow("blurred",blurred)      
+            #cv2.imshow("blurred",blurred)      
             cv2.imshow("draw_img", self.img_initial)
             cv2.waitKey()            
             
         return Search_Region_Coordinates, thresh_cover
-
+    
+    def Group_Region (self, plot_flag = None):
+        
+        if plot_flag is None:
+            
+            plot_flag = False
+        
+        SRC, thresh_cover = self.Get_Region()
+        
+        SRC = SRC.tolist()
+        
+        Search_index = list(range(len(SRC)))
+                
+        Group_Region_Coordinates = np.int0(np.zeros((1,4)))
+        
+        while len(Search_index) > 0 :
+            
+            j = Search_index[0]
+            
+            Group_index = [j]
+                          
+            for k in Search_index[1:]:
+                
+                Expand_scale = 0.5
+                
+                l1 = [int(SRC[j][0]*(1-Expand_scale)),int(SRC[j][1]*(1-Expand_scale))]
+                r1 = [int(SRC[j][2]*(1+Expand_scale)),int(SRC[j][3]*(1+Expand_scale))]
+                l2 = [int(SRC[k][0]*(1-Expand_scale)),int(SRC[k][1]*(1-Expand_scale))]
+                r2 = [int(SRC[k][2]*(1+Expand_scale)),int(SRC[k][3]*(1+Expand_scale))]
+                               
+                if (l1[0]>r2[0] or l2[0]>r1[0] or l1[1]<r2[1] or l2[1]<l1[1]) == False :
+            
+                    Group_index.append(k)      
+                    
+            for k in Group_index:                      
+                
+                del Search_index[Search_index.index(k)]                                      
+            
+            if len(Group_index) > 1:
+                
+                x1_range = [[],]
+                x2_range = [[],]
+                y1_range = [[],]
+                y2_range = [[],]                
+                                
+                for k in Group_index:
+                    
+                    x1_range.append(SRC[k][0])
+                    y1_range.append(SRC[k][1]) 
+                    x2_range.append(SRC[k][2])
+                    y2_range.append(SRC[k][3])
+                
+                x1 = min(x1_range[1:])
+                y1 = min(y1_range[1:])
+                x2 = max(x2_range[1:])
+                y2 = max(y2_range[1:])
+                
+                
+            else:
+                
+                x1, y1, x2, y2 = SRC[j]
+                
+            box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])     
+            
+            draw_img = cv2.drawContours(self.img_initial, [box], -1, (0, 0, 255), 1)
+            
+            if j == 0:
+                
+                Group_Region_Coordinates[0][:4] = np.int0([[x1,y1,x2,y2]])
+                
+            else:
+            
+                Group_Region_Coordinates = np.append(Group_Region_Coordinates, np.int0([[x1,y1,x2,y2]]),axis = 0)               
+            
+            Group_index = []
+            
+        if plot_flag is True:            
+            #cv2.imshow("blurred",blurred)      
+            cv2.imshow("draw_img", self.img_initial)
+            cv2.waitKey()            
+            
+        return Group_Region_Coordinates, thresh_cover
+                              
 ###############################################################################
         
         
@@ -271,6 +352,23 @@ class Operation_Location(object):
             
 ###############################################################################     
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 lable = ['Close']
 
 wintext = ['NX 1847']
@@ -285,7 +383,7 @@ for i in range(len(lable)) :
     
     img_process = Image_Segmentation(img_initial)
     
-    regions, img_processed = img_process.Get_Region(plot_flag=True)
+    regions, img_processed = img_process.Group_Region(plot_flag=True)
     
     e = Operation_Location(regions,img_processed ,hwnd,lable[i])
     
