@@ -230,7 +230,16 @@ class Image_Segmentation(object):
                           
             for k in Search_index[1:]:
                 
-                Expand_scale = 0.5
+                Expand_scale = 0.2
+                
+                Rect_x1 = min(SRC[j][0],SRC[k][0])
+                Rect_y1 = min(SRC[j][1],SRC[k][1])
+                Rect_x2 = max(SRC[j][2],SRC[k][2])
+                Rect_y2 = max(SRC[j][3],SRC[k][3])
+                
+                Rect1 = np.zeros((Rect_x2-Rect_x1,Rect_y2-Rect_y1))
+                
+                Rect1[Rect_x1:Rect_x2,Rect_y1:Rect_y2] = np.ones(())
                 
                 l1 = [int(SRC[j][0]*(1-Expand_scale)),int(SRC[j][1]*(1-Expand_scale))]
                 r1 = [int(SRC[j][2]*(1+Expand_scale)),int(SRC[j][3]*(1+Expand_scale))]
