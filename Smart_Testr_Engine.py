@@ -269,8 +269,6 @@ class Operation_Location(object):
         
         h, w= self.Image.shape  
         
-        print(h,w)
-        
         region_y = 170
             
         region_x = 340
@@ -304,7 +302,7 @@ class Operation_Location(object):
             
             elif region == 'Whole':
                 
-                print('whole screen search')
+                a = 0
                 
             else:
                 
@@ -319,16 +317,15 @@ class Operation_Location(object):
             
             OCR_string_porcessed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
             OCR_string_porcessed.lstrip(' ')
-            
-            #print(len(OCR_string_porcessed.split()))
-            #print(OCR_string_porcessed.split())
+
+            print(OCR_string_porcessed.split())
 #******************************************************************************
             
             matching_ratios = [(Levenshtein.ratio(i,j))for i in Target_Keyword.split() for j in OCR_string_porcessed.split()]
             
-            matching_num = len([i for i in matching_ratios if i>0.7])
+            matching_num = len([i for i in matching_ratios if i>0.9])
 
-
+            print(matching_num)
 #******************************************************************************
             
             if len(OCR_string_porcessed) == 0:
@@ -337,14 +334,14 @@ class Operation_Location(object):
             else:
                 cv2.imwrite('icon\\icon'+str(i)+'.png', crop_img)
                 
-            if Levenshtein.ratio(OCR_string_porcessed_i, Target_Keyword_i)>0.8 and len(OCR_string_porcessed.split()) == len(Target_Keyword.split()):
+            if Levenshtein.ratio(OCR_string_porcessed_i, Target_Keyword_i)>0.8:               
                 
                 pyautogui.moveTo(left+x1+abs(x2-x1)/2, top+y1+abs(y2-y1)/2)
                 pyautogui.click() 
                 
                 break 
             
-            elif matching_num == len(Target_Keyword.split()) and len(OCR_string_porcessed.split()) > len(Target_Keyword.split()):
+            elif matching_num >= len(Target_Keyword.split()) and len(OCR_string_porcessed.split()) > len(Target_Keyword.split()):
                 
                 m =0
                 
@@ -371,12 +368,13 @@ class Operation_Location(object):
                         OCR_stringm_porcessedm = ''.join(e for e in OCR_stringm if e.isalnum() or e.isspace())
                         OCR_stringm_porcessedm.lstrip(' ')                    
                         
-
 #******************************************************************************
             
-                        matching_ratiosm = [(Levenshtein.ratio(i,j))for i in Target_Keyword.split() for j in OCR_string_porcessed.split()]
+                        matching_ratiosm = [(Levenshtein.ratio(Target_Keyword.split()[0],j))for j in OCR_string_porcessed.split()]
                         
-                        matching_numm = len([i for i in matching_ratiosm if i>0.7])
+                        matching_numm = len([i for i in matching_ratiosm if i>0.9])
+                        
+                        print(Target_Keyword.split()[0])
                               
 ###############################################################################    
                         if matching_numm >=1:
@@ -391,9 +389,9 @@ class Operation_Location(object):
                             
 ############################################################################### 
 
-lable = ['Internal', 'Autotest Manager','Browser']
+lable = ['2D Mesh']
 
-wintext = ['NX 1847','NX 1847','Autotest Manager']
+wintext = ['NX 1847']
 
 
 
@@ -405,7 +403,7 @@ for i in range(len(lable)) :
     
     img_process = Image_Segmentation(img_initial)
     
-    big_regions,small_regions, img_processed = img_process.Get_Region(plot_flag=False)
+    big_regions,small_regions, img_processed = img_process.Get_Region(plot_flag=True)
     
     e = Operation_Location(big_regions,small_regions,img_processed ,hwnd,lable[i],'Whole')
     
