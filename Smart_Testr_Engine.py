@@ -116,17 +116,32 @@ class Image_Segmentation(object):
         
         # Delete the Long Edge
         
-        (_, self.thresh) = cv2.threshold(gray, Binary_Threshold, 255, cv2.THRESH_BINARY_INV)     
+        
+        (_, self.thresh) = cv2.threshold(gray, Binary_Threshold, 255, cv2.THRESH_BINARY_INV) 
+        
+        (_, self.thresh_recog) = cv2.threshold(gray,150, 255, cv2.THRESH_BINARY_INV)
+        
+        #self.thresh =cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,11,2)
+               
+        #self.thresh_recog =cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,11,2)
         
         edges = cv2.Canny(self.thresh,100,200)
         
+        edges_1 = cv2.Canny(self.thresh_recog,100,200)
+        
         lines = cv2.HoughLinesP(edges,1,np.pi/180,10, minLineLength = 20, maxLineGap = 0)
         
+        lines_1 = cv2.HoughLinesP(edges_1,1,np.pi/180,10, minLineLength = 20, maxLineGap = 0)
+        
         if lines is not None:
-
             for i in range(len(lines)):
                 line = lines[i]    
                 cv2.line(self.thresh,(line[0][0],line[0][1]), (line[0][2],line[0][3]),(0,0,0),5)
+       
+        if lines_1 is not None:
+            for i in range(len(lines_1)):
+                line = lines_1[i]    
+                cv2.line(self.thresh_recog,(line[0][0],line[0][1]), (line[0][2],line[0][3]),(0,0,0),4)
                 
         thresh_copy = self.thresh.copy()
           
@@ -145,10 +160,10 @@ class Image_Segmentation(object):
         
         h, w, _ = img_initial_copy.shape
         
-        closed = cv2.dilate(thresh_region, kernel_dilate, 1)
+        closed = cv2.dilate(thresh_region, kernel_dilate,1)
         
         #blurred = cv2.GaussianBlur(closed, (9, 9),0) # Gaussian Blur reduce noise
-        blurred = closed   
+        blurred = closed
         
         (_, cnts, _) = cv2.findContours(blurred, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
@@ -179,14 +194,23 @@ class Image_Segmentation(object):
             
             box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])
             
-            
             if (x1 - w1*scale) >= 0 and (y1 - h1*scale) >= 0:
             
-                corner = np.int0([[(x1- w1*scale),(y1- h1*scale),(x2 + w1*scale),(y2 + h1*scale)]])
+                corner = np.int0([[(x1- w1*scale*0),(y1- h1*scale),(x2 + w1*scale*0),(y2 + h1*scale)]])
+                
+                x1 = x1- w1*scale
+                
+                y1 = y1- h1*scale
+                
+                x2 = x2 + w1*scale
+                
+                y2 = y2 + h1*scale
             
             else:
                 
                 corner = np.int0([[x1,y1,(x2 + w1*scale),(y2 + h1*scale)]])
+                
+            box1 =  np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])  
             
             if i == 0:
                 
@@ -200,7 +224,7 @@ class Image_Segmentation(object):
                     
                     cv2.drawContours(thresh_region, [box], -1, (255, 255, 255), -1)
                         
-                    cv2.drawContours(img_initial_copy, [box], -1, (0, 0, 255), 1)
+                    cv2.drawContours(img_initial_copy, [box1], -1, (0, 0, 255), 1)
                                   
         return Region_Coordinates, thresh_region, img_initial_copy
          
@@ -209,11 +233,9 @@ class Image_Segmentation(object):
         
         self.img_process()
         
-        thresh_copy  = self.thresh.copy()
+        thresh_copy  = self.closed.copy()
         
-        closed_copy = self.closed.copy()
-        
-        thresh_cover = cv2.bitwise_not(thresh_copy)
+        thresh_cover = cv2.bitwise_not(self.thresh_recog.copy())
 
 #******************************************************************************        
         kernel_dilate = np.uint8(np.ones((3,6)))      
@@ -222,15 +244,15 @@ class Image_Segmentation(object):
            
         Small_box, Small_region, plot_img_small = self.img_group(thresh_copy,kernel_dilate)
                     
-        kernel_dilate = np.uint8(np.ones((4,3)))     
-        kernel_dilate[1:3,:]=0
+        kernel_dilate = np.uint8(np.ones((5,3)))     
+        kernel_dilate[1:2,:]=0
         
-        Big_box, _, plot_img_big = self.img_group(Small_region,kernel_dilate)
-                       
+        Big_box, Big_region, plot_img_big = self.img_group(Small_region,kernel_dilate)                   
                                     
-        if plot_flag is True:            
-            cv2.imshow("blurred",plot_img_small)      
-            cv2.imshow("draw_img", plot_img_big)
+        if plot_flag is False:            
+            
+            cv2.imshow("small", plot_img_small)      
+            cv2.imshow("big", plot_img_big)
             cv2.waitKey()            
    
         return Big_box, Small_box, thresh_cover
@@ -317,13 +339,14 @@ class Operation_Location(object):
             
             OCR_string_porcessed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
             OCR_string_porcessed.lstrip(' ')
+            
+            print(OCR_string_porcessed.split())
 #******************************************************************************
             
             matching_ratios = [(Levenshtein.ratio(i,j))for i in Target_Keyword.split() for j in OCR_string_porcessed.split()]
             
-            matching_num = len([i for i in matching_ratios if i>0.7])
-            
-            print(OCR_string_porcessed.split(),Target_Keyword.split())
+            matching_num = len([i for i in matching_ratios if i>0.9])
+
 #******************************************************************************
             
             if len(OCR_string_porcessed) == 0:
@@ -332,7 +355,7 @@ class Operation_Location(object):
             else:
                 cv2.imwrite('icon\\icon'+str(i)+'.png', crop_img)
                 
-            if Levenshtein.ratio(OCR_string_porcessed_i, Target_Keyword_i)>0.7:               
+            if Levenshtein.ratio(OCR_string_porcessed_i, Target_Keyword_i)>0.9:               
                 
                 pyautogui.moveTo(left+x1+abs(x2-x1)/2, top+y1+abs(y2-y1)/2)
                 pyautogui.click() 
@@ -341,13 +364,9 @@ class Operation_Location(object):
             
             elif matching_num >= len(Target_Keyword.split()) and len(OCR_string_porcessed.split()) > len(Target_Keyword.split()):
                 
-                m=0
+                matching_word =np.zeros((len(SRM),len(Target_Keyword.split())))
                 
-                while break_flag == 0:   
-                    
-                    list_while = list(range(len(SRM)))
-                    
-                    i = list_while[m]
+                for i in range(len(SRM)):   
                     
                     if SRM[i][0]>= x1 and SRM[i][1]>= y1 and SRM[i][2]<= x2 and SRM[i][3]<= y2 :
                     
@@ -359,36 +378,35 @@ class Operation_Location(object):
                         hightm = y2m-y1m
                         widthm = x2m-x1m             
                             
-                        crop_imgm = self.Image[y1m:y1m+hightm, x1m:x1m+widthm]            
+                        crop_imgm = self.Image[y1m:y1m+hightm, x1m:x1m+widthm]  
                         
-                        OCR_stringm = pytesseract.image_to_string(Image.fromarray(crop_imgm))
+                        cv2.imshow('',crop_imgm)
+                        cv2.waitKey()
+                        
+                        OCR_stringm = pytesseract.image_to_string(Image.fromarray(crop_imgm)).lower()
                         
                         OCR_stringm_porcessedm = ''.join(e for e in OCR_stringm if e.isalnum() or e.isspace())
-                        OCR_stringm_porcessedm.lstrip(' ')                    
+                        OCR_stringm_porcessedm.lstrip(' ')   
+
+                        print(OCR_stringm_porcessedm.split())                        
+
                         
 #******************************************************************************
                         for k in range(len(Target_Keyword.split())):
                             
                             matching_ratiosm = [(Levenshtein.ratio(Target_Keyword.split()[k],j))for j in OCR_stringm_porcessedm.split()]
                         
-                            matching_numm = len([i for i in matching_ratiosm if i>0.7]) 
-
-###############################################################################    
-                            if matching_numm == 1:
-                                
-                                pyautogui.moveTo(left+x1m+abs(x2m-x1m)/2, top+y1m+abs(y2m-y1m)/2)
-                                pyautogui.click() 
-                                
-                                break_flag = 1  
-                                
-                                break
-                        
-                    m = m+1          
+                            matching_word[i][k] = len([i for i in matching_ratiosm if i > 0.9]) 
+       
+                matching_word_sum = np.sum(matching_word,axis=0)
+                    
+                print(matching_word_sum)
+                
 ############################################################################### 
 
-lable = ['2D Mesh','CQUAD4']
+lable = ['Merge Face']
 
-wintext = ['NX 1847','2D Mesh']
+wintext = ['NX 1847']
 
 
 
@@ -406,6 +424,6 @@ for i in range(len(lable)) :
     
     e.Get_Location()
     
-    time.sleep(1)
+    time.sleep(2)
 
     
