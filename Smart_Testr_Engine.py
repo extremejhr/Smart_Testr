@@ -190,7 +190,7 @@ class Image_Segmentation(object):
             h1 = y2 - y1
             w1 = x2 - x1
             
-            scale = 0.1
+            scale = 0.1*h1/150
             
             box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])
             
