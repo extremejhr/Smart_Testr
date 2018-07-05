@@ -257,7 +257,7 @@ class Operation_Location(object):
         
     def Get_Location(self) :
         
-        Target_Keyword = self.Target_Keyword
+        Target_Keyword = self.Target_Keyword.lower()
         
         left , top , _ , _ = win32gui.GetWindowRect(self.hwnd)
         
@@ -310,22 +310,20 @@ class Operation_Location(object):
              
             crop_img = self.Image[y1:y1+hight, x1:x1+width]            
             
-            OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img))
+            OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img)).lower()
             
             OCR_string_porcessed_i = ''.join(e for e in OCR_string if e.isalnum())
             Target_Keyword_i = ''.join(e for e in Target_Keyword if e.isalnum())
             
             OCR_string_porcessed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
             OCR_string_porcessed.lstrip(' ')
-
-            print(OCR_string_porcessed.split())
 #******************************************************************************
             
             matching_ratios = [(Levenshtein.ratio(i,j))for i in Target_Keyword.split() for j in OCR_string_porcessed.split()]
             
-            matching_num = len([i for i in matching_ratios if i>0.9])
-
-            print(matching_num)
+            matching_num = len([i for i in matching_ratios if i>0.7])
+            
+            print(OCR_string_porcessed.split(),Target_Keyword.split())
 #******************************************************************************
             
             if len(OCR_string_porcessed) == 0:
@@ -334,7 +332,7 @@ class Operation_Location(object):
             else:
                 cv2.imwrite('icon\\icon'+str(i)+'.png', crop_img)
                 
-            if Levenshtein.ratio(OCR_string_porcessed_i, Target_Keyword_i)>0.8:               
+            if Levenshtein.ratio(OCR_string_porcessed_i, Target_Keyword_i)>0.7:               
                 
                 pyautogui.moveTo(left+x1+abs(x2-x1)/2, top+y1+abs(y2-y1)/2)
                 pyautogui.click() 
@@ -343,9 +341,9 @@ class Operation_Location(object):
             
             elif matching_num >= len(Target_Keyword.split()) and len(OCR_string_porcessed.split()) > len(Target_Keyword.split()):
                 
-                m =0
+                m=0
                 
-                while break_flag == 0:  
+                while break_flag == 0:   
                     
                     list_while = list(range(len(SRM)))
                     
@@ -369,29 +367,28 @@ class Operation_Location(object):
                         OCR_stringm_porcessedm.lstrip(' ')                    
                         
 #******************************************************************************
-            
-                        matching_ratiosm = [(Levenshtein.ratio(Target_Keyword.split()[0],j))for j in OCR_string_porcessed.split()]
+                        for k in range(len(Target_Keyword.split())):
+                            
+                            matching_ratiosm = [(Levenshtein.ratio(Target_Keyword.split()[k],j))for j in OCR_stringm_porcessedm.split()]
                         
-                        matching_numm = len([i for i in matching_ratiosm if i>0.9])
-                        
-                        print(Target_Keyword.split()[0])
-                              
+                            matching_numm = len([i for i in matching_ratiosm if i>0.7]) 
+
 ###############################################################################    
-                        if matching_numm >=1:
-                            
-                            pyautogui.moveTo(left+x1m+abs(x2m-x1m)/2, top+y1m+abs(y2m-y1m)/2)
-                            pyautogui.click() 
-                            
-                            break_flag = 1  
-                       
-                    m = m+1
+                            if matching_numm == 1:
+                                
+                                pyautogui.moveTo(left+x1m+abs(x2m-x1m)/2, top+y1m+abs(y2m-y1m)/2)
+                                pyautogui.click() 
+                                
+                                break_flag = 1  
+                                
+                                break
                         
-                            
+                    m = m+1          
 ############################################################################### 
 
-lable = ['2D Mesh']
+lable = ['2D Mesh','CQUAD4']
 
-wintext = ['NX 1847']
+wintext = ['NX 1847','2D Mesh']
 
 
 
@@ -403,7 +400,7 @@ for i in range(len(lable)) :
     
     img_process = Image_Segmentation(img_initial)
     
-    big_regions,small_regions, img_processed = img_process.Get_Region(plot_flag=True)
+    big_regions,small_regions, img_processed = img_process.Get_Region(plot_flag=False)
     
     e = Operation_Location(big_regions,small_regions,img_processed ,hwnd,lable[i],'Whole')
     
