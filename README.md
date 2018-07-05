@@ -18,5 +18,5 @@ Roadmap：
 3. OCR training to increase the accuracy of text recognization.
 4. Add template matching in program.
 5. Build UI structure and icon database.
-3. Refine the code structure and increase the efficiency.
-4. User interface developed.
+6. Refine the code structure and increase the efficiency.
+7. User interface developed.
