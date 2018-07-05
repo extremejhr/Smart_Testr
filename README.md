@@ -1,6 +1,6 @@
 # Smart_Testr
 
-UI automation test based on image recognization.
+UI automation test based on image recognization (focused on testing of Siemens Simcenter)
 
 Features:
 1. Keyword driven, no affected by the testing software.
