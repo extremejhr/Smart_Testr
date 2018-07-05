@@ -1,5 +1,7 @@
 # Smart_Testr
 
+05.07.2018 version 0.0.0.1
+
 UI automation test based on image recognization (focused on testing of Siemens Simcenter)
 
 Features:
