@@ -176,8 +176,9 @@ class Image_Segmentation(object):
             h1 = y2 - y1
             w1 = x2 - x1
             
-            scaley = 0.2
-            scalex = 0
+            scaley = 0.3
+            scalex = 0.1
+            
             
             box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])
             
@@ -205,7 +206,7 @@ class Image_Segmentation(object):
             
             else:
                 
-                if abs(h1*w1) > 10 and abs(h1*w1)<abs(h*w)/15:
+                if abs(h1*w1) > 50 and abs(h1*w1)<abs(h*w)/15:
                 
                     Region_Coordinates = np.append(Region_Coordinates, corner,axis = 0)
                     
@@ -262,7 +263,6 @@ class Operation_Location(object):
         self.Image = Image
         self.hwnd = hwnd
         self.Target_Keyword = Target_Keyword
-        self.region = region
         
     def Get_Location(self) :
         
@@ -317,9 +317,38 @@ class Operation_Location(object):
                     hightm = y2m-y1m
                     widthm = x2m-x1m             
                         
-                    crop_img = self.Image[y1m:y1m+hightm, x1m:x1m+widthm]  
+                    crop_img_0 = self.Image[y1m:y1m+hightm, x1m:x1m+widthm] 
                     
-                    cv2.imwrite('icon\\icon'+str(j)+'.png', crop_img)
+                    
+                    
+                    crop_img_0 = np.array(crop_img_0)
+                    
+                    pad = 0
+                    
+                    sh = crop_img_0.shape
+                    
+                    sh_pad = (sh[0]+pad*2, sh[1]+pad*2)
+                    
+                    #crop_img = cv2.resize(crop_img_0,sh_pad)
+                    
+                    crop_img = np.zeros(sh_pad)
+                    
+                    crop_img[:,:] = 255
+                    
+                    crop_img[pad:pad+sh[0],pad:pad+sh[1]]=crop_img_0
+                    
+                    
+                    
+                    #crop_img = cv2.GaussianBlur(crop_img,(1, 1),20)        
+                    
+                    #cv2.imshow('',crop_img)
+                    #cv2.waitKey()
+                    
+                    
+                    
+                    
+                    
+                    
                     
                     OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img),lang='eng').lower()
                     
@@ -331,11 +360,15 @@ class Operation_Location(object):
                     
                     if len(OCR_string_porcessed.split()) > 0:
                    
-                        print(OCR_string_porcessed)                                 
+                        print(OCR_string_porcessed)  
+                        cv2.imwrite('icon\\icon_'+OCR_string_porcessed+'.png', crop_img) 
+                    else:
+
+                        cv2.imwrite('icon1\\icon1'+str(j)+'.png', crop_img)                             
             
                     for k in range(len(Target_Keyword_i)):
                         
-                        if Levenshtein.ratio(OCR_string_porcessed, Target_Keyword_i[k])>0.9:               
+                        if Levenshtein.ratio(OCR_string_porcessed, Target_Keyword_i[k])>0.8:               
                             
                             Medical_results[j] = k+1
                             
@@ -361,9 +394,9 @@ class Operation_Location(object):
                 
 ############################################################################### 
 
-lable = ['Element Quality', 'Selected']
+lable = ['1D Connection']
 
-wintext = ['NX 1847','Element Quality']
+wintext = ['NX 1847']
 
 
 
@@ -375,9 +408,9 @@ for i in range(len(lable)) :
     
     img_process = Image_Segmentation(img_initial)
     
-    big_regions,small_regions, img_processed = img_process.Get_Region(plot_flag=True)
+    big_regions,small_regions, img_processed = img_process.Get_Region(plot_flag=False)
     
-    e = Operation_Location(big_regions,small_regions,img_processed ,hwnd,lable[i])
+    e = Operation_Location(big_regions,small_regions,img_processed,hwnd,lable[i])
     
     e.Get_Location()
     
