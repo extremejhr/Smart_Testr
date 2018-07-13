@@ -6,18 +6,7 @@ Created on Wed Jul  4 16:59:17 2018
 """
 
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jun 28 15:59:03 2018
 
-@author: xqk9qq
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jun 27 12:29:34 2018
-
-@author: xqk9qq
-"""
 
 ###############################################################################
 #                                                                             
@@ -119,11 +108,11 @@ class Image_Segmentation(object):
         
         (_, self.thresh) = cv2.threshold(gray, Binary_Threshold, 255, cv2.THRESH_BINARY_INV) 
         
-        (_, self.thresh_recog) = cv2.threshold(gray,150, 255, cv2.THRESH_BINARY_INV)
+        #(_, self.thresh_recog) = cv2.threshold(gray,180, 255, cv2.THRESH_BINARY_INV)
         
         #self.thresh =cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,11,2)
                
-        #self.thresh_recog =cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,11,2)
+        self.thresh_recog =cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,11,2)
         
         edges = cv2.Canny(self.thresh,100,200)
         
@@ -190,25 +179,26 @@ class Image_Segmentation(object):
             h1 = y2 - y1
             w1 = x2 - x1
             
-            scale = 0.1*h1/150
+            scaley = 0.1
+            scalex = 0.1
             
             box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])
             
-            if (x1 - w1*scale) >= 0 and (y1 - h1*scale) >= 0:
+            if (x1 - w1*scalex) >= 0 and (y1 - h1*scaley) >= 0:
             
-                corner = np.int0([[(x1- w1*scale*0),(y1- h1*scale),(x2 + w1*scale*0),(y2 + h1*scale)]])
+                corner = np.int0([[(x1- w1*scalex),(y1- h1*scaley),(x2 + w1*scalex),(y2 + h1*scaley)]])
                 
-                x1 = x1- w1*scale
+                x1 = x1- w1*scalex
                 
-                y1 = y1- h1*scale
+                y1 = y1- h1*scaley
                 
-                x2 = x2 + w1*scale
+                x2 = x2 + w1*scalex
                 
-                y2 = y2 + h1*scale
+                y2 = y2 + h1*scaley
             
             else:
                 
-                corner = np.int0([[x1,y1,(x2 + w1*scale),(y2 + h1*scale)]])
+                corner = np.int0([[x1,y1,(x2 + w1*scalex),(y2 + h1*scaley)]])
                 
             box1 =  np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])  
             
@@ -218,7 +208,7 @@ class Image_Segmentation(object):
             
             else:
                 
-                if abs(h1*w1) > 10:
+                if abs(h1*w1) > 10 and abs(h1*w1)<abs(h*w)/15:
                 
                     Region_Coordinates = np.append(Region_Coordinates, corner,axis = 0)
                     
@@ -238,14 +228,14 @@ class Image_Segmentation(object):
         thresh_cover = cv2.bitwise_not(self.thresh_recog.copy())
 
 #******************************************************************************        
-        kernel_dilate = np.uint8(np.ones((3,6)))      
+        kernel_dilate = np.uint8(np.ones((3,4)))      
         kernel_dilate[1,:]=0
 #******************************************************************************
            
         Small_box, Small_region, plot_img_small = self.img_group(thresh_copy,kernel_dilate)
                     
-        kernel_dilate = np.uint8(np.ones((5,3)))     
-        kernel_dilate[1:2,:]=0
+        kernel_dilate = np.uint8(np.ones((4,4)))      
+        kernel_dilate[2,:]=0
         
         Big_box, Big_region, plot_img_big = self.img_group(Small_region,kernel_dilate)                   
                                     
@@ -404,7 +394,7 @@ class Operation_Location(object):
                 
 ############################################################################### 
 
-lable = ['Merge Face']
+lable = ['Merge Faceaa666']
 
 wintext = ['NX 1847']
 

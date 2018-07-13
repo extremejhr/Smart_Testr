@@ -1,6 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul 11 14:57:59 2018
+Created on Thu Jul  5 09:23:31 2018
+
+@author: xqk9qq
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jul  4 16:59:17 2018
+
+@author: xqk9qq
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jun 28 15:59:03 2018
+
+@author: xqk9qq
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jun 27 12:29:34 2018
 
 @author: xqk9qq
 """
@@ -102,32 +123,17 @@ class Image_Segmentation(object):
         
         # Delete the Long Edge
         
-        
-        (_, self.thresh) = cv2.threshold(gray, Binary_Threshold, 255, cv2.THRESH_BINARY_INV) 
-        
-        #(_, self.thresh_recog) = cv2.threshold(gray,180, 255, cv2.THRESH_BINARY_INV)
-        
-        #self.thresh =cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV,11,2)
-               
-        self.thresh_recog =cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,11,2)
+        (_, self.thresh) = cv2.threshold(gray, Binary_Threshold, 255, cv2.THRESH_BINARY_INV)     
         
         edges = cv2.Canny(self.thresh,100,200)
         
-        edges_1 = cv2.Canny(self.thresh_recog,100,200)
-        
         lines = cv2.HoughLinesP(edges,1,np.pi/180,10, minLineLength = 20, maxLineGap = 0)
         
-        lines_1 = cv2.HoughLinesP(edges_1,1,np.pi/180,10, minLineLength = 20, maxLineGap = 0)
-        
         if lines is not None:
+
             for i in range(len(lines)):
                 line = lines[i]    
                 cv2.line(self.thresh,(line[0][0],line[0][1]), (line[0][2],line[0][3]),(0,0,0),5)
-       
-        if lines_1 is not None:
-            for i in range(len(lines_1)):
-                line = lines_1[i]    
-                cv2.line(self.thresh_recog,(line[0][0],line[0][1]), (line[0][2],line[0][3]),(0,0,0),4)
                 
         thresh_copy = self.thresh.copy()
           
@@ -146,10 +152,10 @@ class Image_Segmentation(object):
         
         h, w, _ = img_initial_copy.shape
         
-        closed = cv2.dilate(thresh_region, kernel_dilate,1)
+        closed = cv2.dilate(thresh_region, kernel_dilate, 1)
         
         #blurred = cv2.GaussianBlur(closed, (9, 9),0) # Gaussian Blur reduce noise
-        blurred = closed
+        blurred = closed   
         
         (_, cnts, _) = cv2.findContours(blurred, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
@@ -176,28 +182,18 @@ class Image_Segmentation(object):
             h1 = y2 - y1
             w1 = x2 - x1
             
-            scaley = 0.2
-            scalex = 0
+            scale = 0.1
             
             box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])
             
-            if (x1 - w1*scalex) >= 0 and (y1 - h1*scaley) >= 0:
             
-                corner = np.int0([[(x1- w1*scalex),(y1- h1*scaley),(x2 + w1*scalex),(y2 + h1*scaley)]])
-                
-                x1 = x1- w1*scalex
-                
-                y1 = y1- h1*scaley
-                
-                x2 = x2 + w1*scalex
-                
-                y2 = y2 + h1*scaley
+            if (x1 - w1*scale) >= 0 and (y1 - h1*scale) >= 0:
+            
+                corner = np.int0([[(x1- w1*scale),(y1- h1*scale),(x2 + w1*scale),(y2 + h1*scale)]])
             
             else:
                 
-                corner = np.int0([[x1,y1,(x2 + w1*scalex),(y2 + h1*scaley)]])
-                
-            box1 =  np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])  
+                corner = np.int0([[x1,y1,(x2 + w1*scale),(y2 + h1*scale)]])
             
             if i == 0:
                 
@@ -205,13 +201,13 @@ class Image_Segmentation(object):
             
             else:
                 
-                if abs(h1*w1) > 50 and abs(h1*w1)<abs(h*w)/15:
+                if abs(h1*w1) > 10:
                 
                     Region_Coordinates = np.append(Region_Coordinates, corner,axis = 0)
                     
                     cv2.drawContours(thresh_region, [box], -1, (255, 255, 255), -1)
                         
-                    cv2.drawContours(img_initial_copy, [box1], -1, (0, 0, 255), 1)
+                    cv2.drawContours(img_initial_copy, [box], -1, (0, 0, 255), 1)
                                   
         return Region_Coordinates, thresh_region, img_initial_copy
          
@@ -220,25 +216,28 @@ class Image_Segmentation(object):
         
         self.img_process()
         
-        thresh_copy  = self.closed.copy()
+        thresh_copy  = self.thresh.copy()
         
-        thresh_cover = cv2.bitwise_not(self.thresh_recog.copy())
+        closed_copy = self.closed.copy()
+        
+        thresh_cover = cv2.bitwise_not(thresh_copy)
 
 #******************************************************************************        
-        kernel_dilate = np.uint8(np.ones((3,4)))      
+        kernel_dilate = np.uint8(np.ones((3,6)))      
         kernel_dilate[1,:]=0
 #******************************************************************************
            
         Small_box, Small_region, plot_img_small = self.img_group(thresh_copy,kernel_dilate)
                     
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+        kernel_dilate = np.uint8(np.ones((4,3)))     
+        kernel_dilate[1:3,:]=0
         
-        Big_box, Big_region, plot_img_big = self.img_group(Small_region,kernel)                   
+        Big_box, _, plot_img_big = self.img_group(Small_region,kernel_dilate)
+                       
                                     
-        if plot_flag is False:            
-            
-            cv2.imshow("small", plot_img_small)      
-            cv2.imshow("big", Big_region)
+        if plot_flag is True:            
+            cv2.imshow("blurred",plot_img_small)      
+            cv2.imshow("draw_img", plot_img_big)
             cv2.waitKey()            
    
         return Big_box, Small_box, thresh_cover
@@ -267,9 +266,8 @@ class Operation_Location(object):
         
         Target_Keyword = self.Target_Keyword.lower()
         
-        left , top , _ , _ = win32gui.GetWindowRect(self.hwnd)
-        
-        SRL = self.SRL
+        left=0
+        top =0
         
         SRM = self.SRM
         
@@ -281,12 +279,7 @@ class Operation_Location(object):
             
         region_x = 340
         
-        break_flag = 0
-        
         for i in range(len(SRM)): 
-            
-            if break_flag == 1: 
-                break
             
             x1 = SRM[i][0]
             y1 = SRM[i][1]
@@ -325,13 +318,13 @@ class Operation_Location(object):
             
             OCR_string_porcessed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
             OCR_string_porcessed.lstrip(' ')
-            
 #******************************************************************************
             
             matching_ratios = [(Levenshtein.ratio(i,j))for i in Target_Keyword.split() for j in OCR_string_porcessed.split()]
             
-            matching_num = len([i for i in matching_ratios if i>0.9])
-
+            matching_num = len([i for i in matching_ratios if i>0.7])
+            
+            print(OCR_string_porcessed.split(),Target_Keyword.split())
 #******************************************************************************
             
             if len(OCR_string_porcessed) == 0:
@@ -339,16 +332,15 @@ class Operation_Location(object):
                 cv2.imwrite('icon1\\icon'+str(i)+'.png', crop_img)
                 
             else:
-                print(OCR_string_porcessed.split())
+                
                 cv2.imwrite('icon\\icon'+str(i)+'.png', crop_img)
                 
-
-                
+            
 ############################################################################### 
 
-lable = ['Merge Faceaa666']
+lable = ['2D Mesh']
 
-wintext = ['NX 1847']
+wintext = ['2D Mesh']
 
 
 
@@ -356,16 +348,18 @@ for i in range(len(lable)) :
     
     window = Window_Capture(wintext[i])
     
-    img_initial,hwnd = window.Image_Capture()
+    #img_initial,hwnd = window.Image_Capture()
+    
+    img_initial = cv2.imread('Image\\2dmesh.png')
     
     img_process = Image_Segmentation(img_initial)
     
     big_regions,small_regions, img_processed = img_process.Get_Region(plot_flag=False)
-
-    e = Operation_Location(big_regions,small_regions,img_processed ,hwnd,lable[i],'Whole')
+    
+    e = Operation_Location(big_regions,small_regions,img_processed ,0,lable[i],'Whole')
     
     e.Get_Location()
     
-    time.sleep(2)
+    time.sleep(1)
 
     

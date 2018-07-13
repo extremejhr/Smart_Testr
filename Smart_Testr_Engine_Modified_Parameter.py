@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jul 11 14:57:59 2018
+Created on Fri Jul 13 09:35:29 2018
 
 @author: xqk9qq
 """
+
 
 ###############################################################################
 #                                                                             
@@ -92,7 +93,7 @@ class Image_Segmentation(object):
             
         if Binary_Threshold is None:
             
-            Binary_Threshold = 180               
+            Binary_Threshold = 190           
                    
         #self.img_initial = cv2.imread(self.Operation_Image)
         
@@ -176,8 +177,12 @@ class Image_Segmentation(object):
             h1 = y2 - y1
             w1 = x2 - x1
             
-            scaley = 0.2
-            scalex = 0
+            if h1*w1 !=0:
+            
+                scaley = 0.1*400/(h1*w1)
+                scalex = 0.1*400/(h1*w1)
+            
+            
             
             box = np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])
             
@@ -216,9 +221,9 @@ class Image_Segmentation(object):
         return Region_Coordinates, thresh_region, img_initial_copy
          
     
-    def Get_Region(self, plot_flag = None):
+    def Get_Region(self, plot_flag = None, Binary_Threshold=threshold):
         
-        self.img_process()
+        self.img_process(Binary_Threshold=threshold)
         
         thresh_copy  = self.closed.copy()
         
@@ -231,14 +236,15 @@ class Image_Segmentation(object):
            
         Small_box, Small_region, plot_img_small = self.img_group(thresh_copy,kernel_dilate)
                     
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+        kernel_dilate = np.uint8(np.ones((4,4)))      
+        kernel_dilate[2,:]=0
         
-        Big_box, Big_region, plot_img_big = self.img_group(Small_region,kernel)                   
+        Big_box, Big_region, plot_img_big = self.img_group(Small_region,kernel_dilate)                   
                                     
-        if plot_flag is False:            
+        if plot_flag is True:            
             
             cv2.imshow("small", plot_img_small)      
-            cv2.imshow("big", Big_region)
+            cv2.imshow("big", plot_img_big)
             cv2.waitKey()            
    
         return Big_box, Small_box, thresh_cover
@@ -254,16 +260,17 @@ class Image_Segmentation(object):
 
 class Operation_Location(object):
     
-    def __init__(self, Search_Region_L,Search_Region_S,Image,hwnd,Target_Keyword,region):
+    def __init__(self, Search_Region_L,Search_Region_S,Image,hwnd,Target_Keyword):
         
         self.SRL = Search_Region_L
         self.SRM = Search_Region_S
         self.Image = Image
         self.hwnd = hwnd
         self.Target_Keyword = Target_Keyword
-        self.region = region
         
     def Get_Location(self) :
+        
+        positive_value = 0
         
         Target_Keyword = self.Target_Keyword.lower()
         
@@ -273,80 +280,132 @@ class Operation_Location(object):
         
         SRM = self.SRM
         
-        region = self.region       
-        
         h, w= self.Image.shape  
-        
-        region_y = 170
-            
-        region_x = 340
         
         break_flag = 0
         
-        for i in range(len(SRM)): 
+        for i in range(len(SRL)): 
             
             if break_flag == 1: 
+                
                 break
             
-            x1 = SRM[i][0]
-            y1 = SRM[i][1]
-            x2 = SRM[i][2]
-            y2 = SRM[i][3]
+            k_tag = list(np.zeros((len(Target_Keyword.split()),1)))
+            
+            Medical_results = list(np.zeros((len(SRM),1)))
+            
+            positive_index =[]            
+                      
+            x1 = SRL[i][0]
+            y1 = SRL[i][1]
+            x2 = SRL[i][2]
+            y2 = SRL[i][3]  
             
             hight = y2-y1
-            width = x2-x1
+            width = x2-x1            
             
-            if region == 'Ribbon':
+            
+            crop_img1 = self.Image[y1:y1+hight, x1:x1+width] 
+            
+            #cv2.imshow('',crop_img1)
+            #cv2.waitKey()
+            
+            for j in range(len(SRM)):   
                 
-                if y2 > region_y:
+                if SRM[j][0]>= x1 and SRM[j][1]>= y1 and SRM[j][2]<= x2 and SRM[j][3]<= y2 :
                     
-                    continue
-            
-            elif region == 'Navigator':
                 
-                if x2 > region_x or y1 < region_y:
-                
-                    continue
-            
-            elif region == 'Whole':
-                
-                a = 0
-                
-            else:
-                
-                break
-             
-            crop_img = self.Image[y1:y1+hight, x1:x1+width]            
-            
-            OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img)).lower()
-            
-            OCR_string_porcessed_i = ''.join(e for e in OCR_string if e.isalnum())
-            Target_Keyword_i = ''.join(e for e in Target_Keyword if e.isalnum())
-            
-            OCR_string_porcessed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
-            OCR_string_porcessed.lstrip(' ')
-            
-#******************************************************************************
-            
-            matching_ratios = [(Levenshtein.ratio(i,j))for i in Target_Keyword.split() for j in OCR_string_porcessed.split()]
-            
-            matching_num = len([i for i in matching_ratios if i>0.9])
+                    x1m = SRM[j][0]
+                    y1m = SRM[j][1]
+                    x2m = SRM[j][2]
+                    y2m = SRM[j][3]
+                        
+                    hightm = y2m-y1m
+                    widthm = x2m-x1m             
+                        
+                    crop_img_0 = self.Image[y1m:y1m+hightm, x1m:x1m+widthm] 
+                    
+                    
+                    
+                    crop_img_0 = np.array(crop_img_0)
+                    
+                    pad = 0
+                    
+                    sh = crop_img_0.shape
+                    
+                    sh_pad = (sh[0]+pad*2, sh[1]+pad*2)
+                    
+                    #crop_img = cv2.resize(crop_img_0,sh_pad)
+                    
+                    crop_img = np.zeros(sh_pad)
+                    
+                    crop_img[:,:] = 255
+                    
+                    crop_img[pad:pad+sh[0],pad:pad+sh[1]]=crop_img_0
+                    
+                    
+                    
+                    #crop_img = cv2.GaussianBlur(crop_img,(1, 1),20)        
+                    
+                    #cv2.imshow('',crop_img)
+                    #cv2.waitKey()
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img),lang='eng').lower()
+                    
+                    OCR_string_porcessed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
+                    
+                    Target_Keyword_i = ''.join(e for e in Target_Keyword if e.isalnum() or e.isspace())
+                    
+                    Target_Keyword_i = Target_Keyword.split()  
+                    
+                    if len(OCR_string_porcessed.split()) > 0:
+                   
+                        #print(OCR_string_porcessed)  
+                        #cv2.imwrite('icon\\icon_'+OCR_string_porcessed+'.png', crop_img) 
+                        
+                        positive_value = positive_value + 1 
+                        
+                    #else:
 
-#******************************************************************************
+                        #cv2.imwrite('icon1\\icon1'+str(j)+'.png', crop_img)                             
             
-            if len(OCR_string_porcessed) == 0:
-                
-                cv2.imwrite('icon1\\icon'+str(i)+'.png', crop_img)
-                
-            else:
-                print(OCR_string_porcessed.split())
-                cv2.imwrite('icon\\icon'+str(i)+'.png', crop_img)
-                
-
+                    for k in range(len(Target_Keyword_i)):
+                        
+                        if Levenshtein.ratio(OCR_string_porcessed, Target_Keyword_i[k])>0.8:               
+                            
+                            Medical_results[j] = k+1
+                            
+                            print(Medical_results[j])
+                   
+                    for k in range(len(Target_Keyword_i)):  
+                        
+                        if len([i for i, e in enumerate(Medical_results) if e == k+1])>0 :
+                            
+                            k_tag[k] = 1
+                    
+                    
+                    if sum(k_tag) == len(Target_Keyword_i):
+                        
+                        break_flag = 1  
+                        
+                        pyautogui.moveTo(left+x1+abs(x2m-x1m)/2, top+y1m+abs(y2m-y1m)/2)
+                        
+                        pyautogui.click() 
+                        
+                        
+                        break
+                    
+        return positive_value
                 
 ############################################################################### 
 
-lable = ['Merge Faceaa666']
+lable = ['1D Connectionddddd']
 
 wintext = ['NX 1847']
 
@@ -354,18 +413,34 @@ wintext = ['NX 1847']
 
 for i in range(len(lable)) :
     
+    positive_value_p = 0
+    
+    threshold = 50
+    
     window = Window_Capture(wintext[i])
     
     img_initial,hwnd = window.Image_Capture()
     
     img_process = Image_Segmentation(img_initial)
     
-    big_regions,small_regions, img_processed = img_process.Get_Region(plot_flag=False)
-
-    e = Operation_Location(big_regions,small_regions,img_processed ,hwnd,lable[i],'Whole')
+    for j in range(20):
     
-    e.Get_Location()
+        big_regions,small_regions, img_processed = img_process.Get_Region(plot_flag=False,Binary_Threshold=threshold)
+        
+        e = Operation_Location(big_regions,small_regions,img_processed,hwnd,lable[i])
+        
+        positive_value = e.Get_Location()
+        
+        if positive_value_p < positive_value:
+            
+            positive_value_p = positive_value
+            
+            print('threshold = ',threshold)
+            print('OCR Success Num = ', positive_value_p)
+            
+        threshold = threshold + 10
+                 
     
-    time.sleep(2)
+   # time.sleep(2)
 
     
