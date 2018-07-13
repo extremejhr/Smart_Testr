@@ -22,3 +22,9 @@ Roadmap：
 5. Build UI structure and icon database.
 6. Refine the code structure and increase the efficiency.
 7. User interface developed.
+
+13.07.2018 version 0.0.0.1.Modified
+
+1. New Structure.
+2. Add hyperparamter class in order to select best kernel and scale parameters.
+3. Need further wrapp the class.
