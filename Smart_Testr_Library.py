@@ -80,7 +80,7 @@ class Image_Process(object):
         
     def IProcess(self):
         
-        segmentation_threshold = self.segmentation_threshold.copy()
+        segmentation_threshold = self.segmentation_threshold
         
         img_initial = self.img_initial.copy()
         
@@ -103,14 +103,20 @@ class Image_Process(object):
             for i in range(len(lines)):
                 
                 line = lines[i]    
-                cv2.line(self.thresh,(line[0][0],line[0][1]), (line[0][2],line[0][3]),(0,0,0),5)
+                cv2.line(thresh_seg,(line[0][0],line[0][1]), (line[0][2],line[0][3]),(0,0,0),4)
        
         if lines_1 is not None:
             
             for i in range(len(lines_1)):
                 
                 line = lines_1[i]    
-                cv2.line(self.thresh_recog,(line[0][0],line[0][1]), (line[0][2],line[0][3]),(0,0,0),5)
+                cv2.line(thresh_ocr,(line[0][0],line[0][1]), (line[0][2],line[0][3]),(0,0,0),4)
+                
+        kernel_morph = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2,2))
+        
+        thresh_seg = cv2.morphologyEx(thresh_seg, cv2.MORPH_CLOSE, kernel_morph)     
+        
+        thresh_ocr = cv2.bitwise_not(thresh_ocr)
                 
         return thresh_seg, thresh_ocr
     
@@ -142,7 +148,7 @@ class Image_Analyze(object):
 
         scaley = self.scaley      
         
-        h, w, _ = thresh_region.shape
+        h, w = thresh_region.shape
         
         closed = cv2.dilate(thresh_region, kernel_dilate,1)
         
@@ -181,7 +187,7 @@ class Image_Analyze(object):
                 
             y2 = y2 + h1*scaley    
                    
-            corner = np.int0([x1,y1,x2,y2])
+            corner = np.int0([[x1,y1,x2,y2]])
                 
             box =  np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]])  
             
@@ -196,7 +202,10 @@ class Image_Analyze(object):
                     region_coordinates = np.append(region_coordinates, corner,axis = 0)
                     
                     cv2.drawContours(thresh_region, [box_b], -1, (255, 255, 255), -1)
-                                  
+                    
+                    #cv2.drawContours(thresh_seg,[box],-1, (255, 255, 255), -1)
+      
+       
         return region_coordinates, thresh_region    
     
     def IBoundary(self):
@@ -253,6 +262,8 @@ class Image_OCR(object):
         
         break_flag = 0
         
+        operation_coordinates=[]
+        
         for i in range(len(box_coordinates)): 
             
             if break_flag == 1: 
@@ -280,7 +291,7 @@ class Image_OCR(object):
                     hightm = y2m-y1m
                     widthm = x2m-x1m             
                         
-                    crop_img = self.Image[y1m:y1m+hightm, x1m:x1m+widthm] 
+                    crop_img = thresh_ocr[y1m:y1m+hightm, x1m:x1m+widthm] 
                     
                     OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img),lang='eng').lower()
                     
@@ -294,6 +305,9 @@ class Image_OCR(object):
                     if len(OCR_string_porcessed.split()) > 0:
                         
                         positive_value = positive_value + 1  
+                        
+                        print('Running OCR Success Number = ',positive_value)
+                        cv2.imwrite('icon\\icon_'+OCR_string_porcessed+'.png', crop_img) 
                         
                         
                     for k in range(len(Target_Keyword_i)):
@@ -337,7 +351,7 @@ class Search_Engine(object):
             
             self.target_keyword = Target_Keyword  
             
-            self.segmentation_threshold = self.Segmentation_Threshold
+            self.segmentation_threshold = Segmentation_Threshold
             
             self.kernel_dilate_reg = Kernel_Dilate_Region
         
@@ -367,7 +381,7 @@ class Search_Engine(object):
             
             region_coordinates, box_coordinates = Image_Analyze(thresh_seg, kernel_dilate_reg, kernel_dilate_box, scale).IBoundary()
             
-            operation_coordinates, positive_value = Image_OCR(thresh_ocr, window_position ,region_coordinates, box_coordinates,target_keyword)
+            operation_coordinates, positive_value = Image_OCR(thresh_ocr, window_position ,region_coordinates, box_coordinates,target_keyword).ISearch()
         
             return operation_coordinates, positive_value
 
@@ -385,7 +399,7 @@ class HyPara_Optimize(object):
         
         self.title = Title
         
-        self.segmentation_threshold_group = self.Segmentation_Threshold_Group
+        self.segmentation_threshold_group = Segmentation_Threshold_Group
         
         self.kernel_dilate_reg_group = Kernel_Dilate_Region_Group
     
@@ -418,11 +432,16 @@ class HyPara_Optimize(object):
         
         grid_index = [(i,j,m,n) for i in p1_group for j in p2_group for m in p3_group for n in p4_group]
         
+        
         for i in range(len(grid_index)):
+            
+            print(segmentation_threshold_group[grid_index[i][0]]\
+                                           ,kernel_dilate_reg_group[grid_index[i][1]], kernel_dilate_box_group[grid_index[i][2]]\
+                                           ,scale_group[grid_index[i][3]])
             
             _ , positive_value = Search_Engine(title,target_keyword, segmentation_threshold_group[grid_index[i][0]]\
                                            ,kernel_dilate_reg_group[grid_index[i][1]], kernel_dilate_box_group[grid_index[i][2]]\
-                                           ,scale_group[grid_index[i][3]])
+                                           ,scale_group[grid_index[i][3]]).ILocate()
             
             if positive_value_p < positive_value:
             
@@ -430,7 +449,8 @@ class HyPara_Optimize(object):
                 
                 optimize_index = grid_index[i]
                 
-                print('OCR Success Num = ', positive_value)
+                print('!!!!OCR Success Num = ', positive_value)
+                
         
         return optimize_index
             
