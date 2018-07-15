@@ -22,6 +22,14 @@ pytesseract.pytesseract.tesseract_cmd = 'E:\\Development\\Tesseract-OCR\\tessera
 import pyautogui
 import win32gui # OCR combined with win32 get handler and position.
 
+import os
+
+import shutil
+
+import threading
+
+from time import sleep, ctime 
+
 ###############################################################################
 #
 # Image Capture - Only suitable for Win32 application
@@ -117,6 +125,9 @@ class Image_Process(object):
         thresh_seg = cv2.morphologyEx(thresh_seg, cv2.MORPH_CLOSE, kernel_morph)     
         
         thresh_ocr = cv2.bitwise_not(thresh_ocr)
+        
+        #cv2.imshow('',thresh_ocr)
+        #cv2.waitKey()
                 
         return thresh_seg, thresh_ocr
     
@@ -205,7 +216,8 @@ class Image_Analyze(object):
                     
                     #cv2.drawContours(thresh_seg,[box],-1, (255, 255, 255), -1)
       
-       
+        cv2.imshow('',thresh_region)
+        cv2.waitKey()
         return region_coordinates, thresh_region    
     
     def IBoundary(self):
@@ -240,19 +252,92 @@ class Image_OCR(object):
         self.window_position = Window_Position
         self.target_keyword = Target_Keyword
         
-    def ISearch(self) :
+    def IOCR(self, Box_Coordinates) :
         
-        region_coordinates = self.region_coordinates
+        box_coordinates = Box_Coordinates 
+        
+        region_coordinates = self.region_coordinates        
+        
+        thresh_ocr = self.thresh_ocr
+        
+        positive_value = 0
+        
+        medical_matrix = []
+        
+        for i in range(len(box_coordinates)): 
+                      
+            x1 = box_coordinates[i][0]
+            y1 = box_coordinates[i][1]
+            x2 = box_coordinates[i][2]
+            y2 = box_coordinates[i][3]                                      
+
+            for j in range(len(region_coordinates)):   
+                 
+                if region_coordinates[j][0]>= x1 and region_coordinates[j][1]>= y1 and region_coordinates[j][2]<= x2 and region_coordinates[j][3]<= y2 :
+
+                    x1m = region_coordinates[j][0]
+                    y1m = region_coordinates[j][1]
+                    x2m = region_coordinates[j][2]
+                    y2m = region_coordinates[j][3]
+                        
+                    hightm = y2m-y1m
+                    widthm = x2m-x1m             
+                        
+                    crop_img = thresh_ocr[y1m:y1m+hightm, x1m:x1m+widthm] 
+                    
+                    OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img),lang='eng').lower()
+                    
+                    OCR_string_porcessed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
+                    
+                    Target_Keyword_i = ''.join(e for e in target_keyword if e.isalnum() or e.isspace())
+                    
+                    Target_Keyword_i = target_keyword.split()  
+                    
+                    # Grid Search Criteria
+                    
+                    if len(OCR_string_porcessed.split()) > 0:
+                        
+                        positive_value = positive_value + 1  
+                        
+                        medical_matrix.append([i,OCR_string_porcessed,x1m,y1m,x2m,y2m])
+                        
+                        #cv2.imwrite('icon\\'+OCR_string_porcessed+'.png', crop_img) 
+                    
+                    else:
+                       
+                        #cv2.imwrite('icon1\\'+str(j)+'.png', crop_img)
+                        pass
+                       
+        return medical_matrix, positive_value
+   
+    def ISearch(self, Multi_Threads = None):
+        
+        multi_threads = Multi_Threads
+        
+ '''       
+ #####################concurrent multil process####################       
+        
+        if multi_threads is None:
+            
+            multi_threads = 1
         
         box_coordinates = self.box_coordinates 
+        
+        package_step = int(len(box_coordinates)/multi_threads)+1):
+            
+            t = threading.Thread(target=player,args=(list[i],))
+            threads.append(t)        
+        
+        box_coordinates_Package = 
+        
+###################################################################        
+'''
         
         target_keyword = self.target_keyword.lower()
         
         window_position = self.window_position
         
         thresh_ocr = self.thresh_ocr
-        
-        positive_value = 0
         
         left = window_position[0]
         
@@ -263,6 +348,12 @@ class Image_OCR(object):
         break_flag = 0
         
         operation_coordinates=[]
+        
+        medical_matrix, positive_value =  self.IOCR()
+        
+        #shutil.rmtree('icon')
+        
+        #os.mkdir('icon')
         
         for i in range(len(box_coordinates)): 
             
@@ -301,13 +392,18 @@ class Image_OCR(object):
                     
                     Target_Keyword_i = target_keyword.split()  
                     
+                    # Grid Search Criteria
                     
                     if len(OCR_string_porcessed.split()) > 0:
                         
                         positive_value = positive_value + 1  
                         
-                        print('Running OCR Success Number = ',positive_value)
-                        cv2.imwrite('icon\\icon_'+OCR_string_porcessed+'.png', crop_img) 
+                        #cv2.imwrite('icon\\'+OCR_string_porcessed+'.png', crop_img) 
+                    
+                    else:
+                       
+                        #cv2.imwrite('icon1\\'+str(j)+'.png', crop_img)
+                        pass
                         
                         
                     for k in range(len(Target_Keyword_i)):
@@ -333,23 +429,68 @@ class Image_OCR(object):
                         break    
                     
         return operation_coordinates, positive_value
+###############################################################################  
 
+
+###############################################################################
+#
+# Mouse&Keyboard Action Event
+#
+###############################################################################  
+
+class MK_Event(object):
+    
+    def __init__(self, Action_Key, Operation_Coordinates):
+        
+        self.operation_coordinates = Operation_Coordinates
+        
+        self.action_key = Action_Key
+        
+    def IOperate(self):
+        
+        action_key = self.action_key
+        
+        operation_coordinates = self.operation_coordinates
+        
+        x=operation_coordinates[0]
+        
+        y=operation_coordinates[1]
+        
+        if action_key == 'MB1':
+                        
+             pyautogui.click(x, y)
+            
+        elif action_key == 'MB3':
+            
+             pyautogui.rightClick(x, y)
+             
+        elif action_key == 'KIn': 
+            
+             pyautogui.Click(x+50, y)
+             
+             pyautogui.typewrite(action_key[1])
+        
+        else:
+            
+            print('Wrong Action Key!')
+             
 ###############################################################################  
 
 ###############################################################################
 #
 # Image Segmentation - Wrapper of classes (capture, process, ocr)
 #
-###############################################################################
-    
+###############################################################################   
 
 class Search_Engine(object):
     
-        def __init__(self,Title,Target_Keyword,Segmentation_Threshold,Kernel_Dilate_Region,Kernel_Dilate_Box,Scale):
+        def __init__(self,Title,Action_Sequence,Segmentation_Threshold,Kernel_Dilate_Region,Kernel_Dilate_Box,Scale):
         
             self.title = Title
             
-            self.target_keyword = Target_Keyword  
+            self.action_key = Action_Sequence[0]
+            
+            self.target_keyword = Action_Sequence[1] 
             
             self.segmentation_threshold = Segmentation_Threshold
             
@@ -384,6 +525,15 @@ class Search_Engine(object):
             operation_coordinates, positive_value = Image_OCR(thresh_ocr, window_position ,region_coordinates, box_coordinates,target_keyword).ISearch()
         
             return operation_coordinates, positive_value
+        
+        def IOperate(self):
+            
+            action_key = self.action_key
+            
+            operation_coordinates, _ = self.ILocate()
+           
+            MK_Event(action_key, operation_coordinates).IOperate()
+                    
 
 ###############################################################################  
 
@@ -435,9 +585,7 @@ class HyPara_Optimize(object):
         
         for i in range(len(grid_index)):
             
-            print(segmentation_threshold_group[grid_index[i][0]]\
-                                           ,kernel_dilate_reg_group[grid_index[i][1]], kernel_dilate_box_group[grid_index[i][2]]\
-                                           ,scale_group[grid_index[i][3]])
+            print('Process = ', i, '/',len(grid_index))
             
             _ , positive_value = Search_Engine(title,target_keyword, segmentation_threshold_group[grid_index[i][0]]\
                                            ,kernel_dilate_reg_group[grid_index[i][1]], kernel_dilate_box_group[grid_index[i][2]]\
@@ -454,17 +602,6 @@ class HyPara_Optimize(object):
         
         return optimize_index
             
-###############################################################################  
-
-###############################################################################
-#
-# Mouse&Keyboard Action Event
-#
-###############################################################################  
-'''
-Not finished    
-
-'''
 ###############################################################################  
 
 ###############################################################################
