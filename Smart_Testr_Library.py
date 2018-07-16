@@ -26,9 +26,10 @@ import os
 
 import shutil
 
-import threading
+import time
 
-from time import sleep, ctime 
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, Executor
+
 
 ###############################################################################
 #
@@ -216,8 +217,8 @@ class Image_Analyze(object):
                     
                     #cv2.drawContours(thresh_seg,[box],-1, (255, 255, 255), -1)
       
-        cv2.imshow('',thresh_region)
-        cv2.waitKey()
+        #cv2.imshow('',thresh_region)
+        #cv2.waitKey()
         return region_coordinates, thresh_region    
     
     def IBoundary(self):
@@ -230,9 +231,33 @@ class Image_Analyze(object):
         
         region_coordinates, thresh_region = self.IRegion(thresh_seg,kernel_dilate_reg)
         
-        box_coordinates, _ = self.IRegion(thresh_region, kernel_dilate_box)            
+        box_coordinates, _ = self.IRegion(thresh_region, kernel_dilate_box) 
+        
+        group_coordinates = []
+
+        for i in range(len(box_coordinates)): 
+                      
+            x1 = box_coordinates[i][0]
+            y1 = box_coordinates[i][1]
+            x2 = box_coordinates[i][2]
+            y2 = box_coordinates[i][3]  
+
+            group_pack = []                                    
+
+            for j in range(len(region_coordinates)):   
+                 
+                if region_coordinates[j][0]>= x1 and region_coordinates[j][1]>= y1 and region_coordinates[j][2]<= x2 and region_coordinates[j][3]<= y2 :
+
+                    x1m = region_coordinates[j][0]
+                    y1m = region_coordinates[j][1]
+                    x2m = region_coordinates[j][2]
+                    y2m = region_coordinates[j][3]
+                    
+                    group_pack.append([x1m,y1m,x2m,y2m])
+            
+            group_coordinates.append(group_pack) 
    
-        return region_coordinates, box_coordinates
+        return group_coordinates
     
 ###############################################################################  
 
@@ -244,19 +269,19 @@ class Image_Analyze(object):
 
 class Image_OCR(object):
     
-    def __init__(self,Thresh_OCR, Window_Position ,Region_Coordinates, Box_Coordinates,Target_Keyword):
+    def __init__(self,Thresh_OCR, Window_Position ,Group_Coordinates, Target_Keyword):
         
-        self.region_coordinates = Region_Coordinates
-        self.box_coordinates = Box_Coordinates
+        self.group_coordinates = Group_Coordinates
+        
         self.thresh_ocr = Thresh_OCR
+        
         self.window_position = Window_Position
+        
         self.target_keyword = Target_Keyword
         
-    def IOCR(self, Box_Coordinates) :
+    def IOCR(self, Group_Coordinates) :
         
-        box_coordinates = Box_Coordinates 
-        
-        region_coordinates = self.region_coordinates        
+        group_coordinates = Group_Coordinates
         
         thresh_ocr = self.thresh_ocr
         
@@ -264,76 +289,82 @@ class Image_OCR(object):
         
         medical_matrix = []
         
-        for i in range(len(box_coordinates)): 
-                      
-            x1 = box_coordinates[i][0]
-            y1 = box_coordinates[i][1]
-            x2 = box_coordinates[i][2]
-            y2 = box_coordinates[i][3]                                      
+        for i in range(len(group_coordinates)): 
 
-            for j in range(len(region_coordinates)):   
+            for j in range(len(group_coordinates[i])):  
+                
+                medical_results =[]
                  
-                if region_coordinates[j][0]>= x1 and region_coordinates[j][1]>= y1 and region_coordinates[j][2]<= x2 and region_coordinates[j][3]<= y2 :
-
-                    x1m = region_coordinates[j][0]
-                    y1m = region_coordinates[j][1]
-                    x2m = region_coordinates[j][2]
-                    y2m = region_coordinates[j][3]
-                        
-                    hightm = y2m-y1m
-                    widthm = x2m-x1m             
-                        
-                    crop_img = thresh_ocr[y1m:y1m+hightm, x1m:x1m+widthm] 
+                x1m = group_coordinates[i][j][0]
+                y1m = group_coordinates[i][j][1]
+                x2m = group_coordinates[i][j][2]
+                y2m = group_coordinates[i][j][3]
                     
-                    OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img),lang='eng').lower()
+                hightm = y2m-y1m
+                widthm = x2m-x1m             
                     
-                    OCR_string_porcessed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
+                crop_img = thresh_ocr[y1m:y1m+hightm, x1m:x1m+widthm] 
+                
+                OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img),lang='eng').lower()
+                
+                OCR_string_porcessed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
+                
+                # Grid Search Criteria
+                
+                if len(OCR_string_porcessed.split()) > 0:
                     
-                    Target_Keyword_i = ''.join(e for e in target_keyword if e.isalnum() or e.isspace())
+                    positive_value = positive_value + 1  
                     
-                    Target_Keyword_i = target_keyword.split()  
+                    medical_results.append([OCR_string_porcessed,x1m,y1m,x2m,y2m])
                     
-                    # Grid Search Criteria
-                    
-                    if len(OCR_string_porcessed.split()) > 0:
-                        
-                        positive_value = positive_value + 1  
-                        
-                        medical_matrix.append([i,OCR_string_porcessed,x1m,y1m,x2m,y2m])
-                        
-                        #cv2.imwrite('icon\\'+OCR_string_porcessed+'.png', crop_img) 
-                    
-                    else:
+                    #cv2.imwrite('icon\\'+OCR_string_porcessed+'.png', crop_img) 
+                
+                else:
+                   
+                    #cv2.imwrite('icon1\\'+str(j)+'.png', crop_img)
+                    pass
+            
+            medical_matrix.append(medical_results)
                        
-                        #cv2.imwrite('icon1\\'+str(j)+'.png', crop_img)
-                        pass
-                       
-        return medical_matrix, positive_value
+        return medical_matrix
    
     def ISearch(self, Multi_Threads = None):
         
-        multi_threads = Multi_Threads
-        
- '''       
- #####################concurrent multil process####################       
+        multi_threads = Multi_Threads 
         
         if multi_threads is None:
             
-            multi_threads = 1
-        
-        box_coordinates = self.box_coordinates 
-        
-        package_step = int(len(box_coordinates)/multi_threads)+1):
+            multi_threads = 8      
             
-            t = threading.Thread(target=player,args=(list[i],))
-            threads.append(t)        
+        step = int(len(self.group_coordinates)/multi_threads)
         
-        box_coordinates_Package = 
+        group_coordinates = [] 
         
-###################################################################        
-'''
+        for i in range(multi_threads):
+            
+            if i < multi_threads-1:
+            
+                group_coordinates.append(self.group_coordinates[step*i:step*(i+1)])
+            
+            else:
+                
+                group_coordinates.append(self.group_coordinates[step*i:])   
+    
+        start = time.time()
         
+        pool = ProcessPoolExecutor(max_workers=multi_threads)
+        
+        medical_matrix = list(pool.map(self.IOCR, group_coordinates))
+        
+        print(medical_matrix)
+        
+        end = time.time()
+        
+        print('OCR Collapse Time = ',end-start)
+    
         target_keyword = self.target_keyword.lower()
+        
+        Target_Keyword_i = target_keyword.split()
         
         window_position = self.window_position
         
@@ -355,81 +386,48 @@ class Image_OCR(object):
         
         #os.mkdir('icon')
         
-        for i in range(len(box_coordinates)): 
+        for i in range(len(medical_matrix)): 
+            
+            x1m = medical_matrix[i][j][0]
+            y1m = medical_matrix[i][j][1]
+            
+            x2m = medical_matrix[i][j][2]
+            y2m = medical_matrix[i][j][3]
             
             if break_flag == 1: 
                 
                 break
-                      
-            x1 = box_coordinates[i][0]
-            y1 = box_coordinates[i][1]
-            x2 = box_coordinates[i][2]
-            y2 = box_coordinates[i][3]  
 
             k_tag = list(np.zeros((len(target_keyword.split()),1)))
             
-            medical_results = list(np.zeros((len(region_coordinates),1)))                 
-
-            for j in range(len(region_coordinates)):   
+            medical_region_results = list(np.zeros((len(medical_matrix[i]),1)))                                   
                 
-                if region_coordinates[j][0]>= x1 and region_coordinates[j][1]>= y1 and region_coordinates[j][2]<= x2 and region_coordinates[j][3]<= y2 :
-
-                    x1m = region_coordinates[j][0]
-                    y1m = region_coordinates[j][1]
-                    x2m = region_coordinates[j][2]
-                    y2m = region_coordinates[j][3]
+            for j in range(len(medical_matrix[i])):
+                
+                for k in range(len(Target_Keyword_i)):
+                
+                    if Levenshtein.ratio(medical_matrix[i][0], Target_Keyword_i[k])>0.8:               
                         
-                    hightm = y2m-y1m
-                    widthm = x2m-x1m             
-                        
-                    crop_img = thresh_ocr[y1m:y1m+hightm, x1m:x1m+widthm] 
+                        medical_region_results[j] = k+1
                     
-                    OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img),lang='eng').lower()
+           
+            for m in range(len(Target_Keyword_i)):  
+                
+                if len([i for i, e in enumerate(medical_region_results) if e == m+1])>0 :
                     
-                    OCR_string_porcessed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
+                    k_tag[m] = 1
+            
+            
+            if sum(k_tag) == len(Target_Keyword_i):
+                
+                break_flag = 1  
+                
+                operation_coordinates = [left+x1+abs(x2m-x1m)/2, top+y1m+abs(y2m-y1m)/2]                      
+                                        
+                break    
                     
-                    Target_Keyword_i = ''.join(e for e in target_keyword if e.isalnum() or e.isspace())
-                    
-                    Target_Keyword_i = target_keyword.split()  
-                    
-                    # Grid Search Criteria
-                    
-                    if len(OCR_string_porcessed.split()) > 0:
-                        
-                        positive_value = positive_value + 1  
-                        
-                        #cv2.imwrite('icon\\'+OCR_string_porcessed+'.png', crop_img) 
-                    
-                    else:
-                       
-                        #cv2.imwrite('icon1\\'+str(j)+'.png', crop_img)
-                        pass
-                        
-                        
-                    for k in range(len(Target_Keyword_i)):
-                        
-                        if Levenshtein.ratio(OCR_string_porcessed, Target_Keyword_i[k])>0.8:               
-                            
-                            medical_results[j] = k+1
-                            
-                   
-                    for k in range(len(Target_Keyword_i)):  
-                        
-                        if len([i for i, e in enumerate(medical_results) if e == k+1])>0 :
-                            
-                            k_tag[k] = 1
-                    
-                    
-                    if sum(k_tag) == len(Target_Keyword_i):
-                        
-                        break_flag = 1  
-                        
-                        operation_coordinates = [left+x1+abs(x2m-x1m)/2, top+y1m+abs(y2m-y1m)/2]                      
-                                                
-                        break    
-                    
-        return operation_coordinates, positive_value
-###############################################################################  
+        return operation_coordinates
+##############################################################################  
 
 
 ###############################################################################
@@ -520,9 +518,9 @@ class Search_Engine(object):
     
             thresh_seg, thresh_ocr = Image_Process(img, segmentation_threshold).IProcess()
             
-            region_coordinates, box_coordinates = Image_Analyze(thresh_seg, kernel_dilate_reg, kernel_dilate_box, scale).IBoundary()
+            group_coordinates = Image_Analyze(thresh_seg, kernel_dilate_reg, kernel_dilate_box, scale).IBoundary()
             
-            operation_coordinates, positive_value = Image_OCR(thresh_ocr, window_position ,region_coordinates, box_coordinates,target_keyword).ISearch()
+            operation_coordinates = Image_OCR(thresh_ocr, window_position ,group_coordinates,target_keyword).ISearch()
         
             return operation_coordinates, positive_value
         

@@ -23,30 +23,32 @@ import time
 
 import Smart_Testr_Library as ST
 
-pytesseract.pytesseract.tesseract_cmd = 'E:\\Machine Learning\\Tesseract-OCR\\tesseract'
+#pytesseract.pytesseract.tesseract_cmd = 'E:\\Machine Learning\\Tesseract-OCR\\tesseract'
 
 ############################################################################### 
 
 #time.sleep(5)
 
-segmentation_threshold_group=160
+if __name__ == '__main__':
     
-kernel_dilate_reg1 = np.uint8(np.ones((2,3)))      
-kernel_dilate_reg1[0,:]=0  
-kernel_dilate_reg2 = np.uint8(np.ones((3,4)))      
-kernel_dilate_reg2[1,:]=0  
-kernel_dilate_reg3 = np.uint8(np.ones((4,5)))      
-kernel_dilate_reg3[2,:]=0  
-
-kernel_dilate_reg_group=kernel_dilate_reg2
-
-kernel_dilate_box1 = np.uint8(np.ones((5,5)))      
-kernel_dilate_box1[2,:] = 0
-
-kernel_dilate_box_group=kernel_dilate_box1
-
-scale_group=[0,0.25]
-
-#optimize_index = ST.HyPara_Optimize('Simcenter 12',segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IGrid_Search()
-
-ST.Search_Engine('Simcenter 12',['MB1','Mange materials'],segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IOperate()  
+    segmentation_threshold_group=160
+        
+    kernel_dilate_reg1 = np.uint8(np.ones((2,3)))      
+    kernel_dilate_reg1[0,:]=0  
+    kernel_dilate_reg2 = np.uint8(np.ones((3,4)))      
+    kernel_dilate_reg2[1,:]=0  
+    kernel_dilate_reg3 = np.uint8(np.ones((4,5)))      
+    kernel_dilate_reg3[2,:]=0  
+    
+    kernel_dilate_reg_group=kernel_dilate_reg2
+    
+    kernel_dilate_box1 = np.uint8(np.ones((5,5)))      
+    kernel_dilate_box1[2,:] = 0
+    
+    kernel_dilate_box_group=kernel_dilate_box1
+    
+    scale_group=[0,0.25]
+    
+    #optimize_index = ST.HyPara_Optimize('Simcenter 12',segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IGrid_Search()
+    
+    ST.Search_Engine('NX 1847',['MB1','Mange materials'],segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IOperate()  
