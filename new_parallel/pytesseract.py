@@ -164,11 +164,11 @@ def run_tesseract(input_filename,
     
 ############## change wait() to communicate() for solving the pip block########    
     
-    _ ,stderrdata = proc.communicate()
+    proc.communicate()
     
-    error_string = stderr.read()
+    error_string = proc.stderr.read()
     
-    stderr.close() 
+    proc.stderr.close()
     
     if proc.returncode:
         
