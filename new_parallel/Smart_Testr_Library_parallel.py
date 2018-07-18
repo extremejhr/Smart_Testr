@@ -297,9 +297,11 @@ class Image_OCR(object):
             
         crop_img = thresh_ocr[y1m:y1m+hightm, x1m:x1m+widthm] 
         
-        OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img),lang='eng').lower()
+        OCR_string = pytesseract.image_to_string(Image.fromarray(crop_img),lang='eng',config='--psm 6')
         
         OCR_string_processed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
+        
+        cv2.imwrite('region\\s_'+OCR_string_processed+'.png',crop_img)
                        
         return OCR_string_processed, region_coordinates
    
@@ -313,7 +315,7 @@ class Image_OCR(object):
         
         group_coordinates = self.group_coordinates 
         
-        target_keyword = self.target_keyword.lower()      
+        target_keyword = self.target_keyword     
                            
         target_keyword_i = ''.join(e for e in target_keyword if e.isalnum() or e.isspace())
       
@@ -353,9 +355,11 @@ class Image_OCR(object):
                 
                 for future in futures:
                     
-                    ocr_string = future.result()
+                    ocr_string = list(future.result())
                     
                     if len(ocr_string[0])>0:
+                        
+                        ocr_string[0] = ''.join(e for e in ocr_string[0] if e.isalnum())
                         
                         OCR_string_processed.append(ocr_string[0])
                     
@@ -369,7 +373,7 @@ class Image_OCR(object):
                                           
                     for k in range(len(target_keyword_i)):
                         
-                        if (Levenshtein.ratio(OCR_string_processed[j], target_keyword_i[k]))>0.8:               
+                        if (Levenshtein.ratio(OCR_string_processed[j], target_keyword_i[k]))>0.9:               
                             
                             medical_results[k] = 1 
                             

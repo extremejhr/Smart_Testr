@@ -42,13 +42,23 @@ if __name__ == '__main__':
     
     kernel_dilate_reg_group=kernel_dilate_reg2
     
-    kernel_dilate_box1 = np.uint8(np.ones((5,5)))      
+    kernel_dilate_box1 = np.uint8(np.ones((4,5)))      
     kernel_dilate_box1[2,:] = 0
     
     kernel_dilate_box_group=kernel_dilate_box1
     
-    scale_group=[0,0.25]
+    scale_group=[0.05,0.2]
+    
+    Action_Sequence =[['MB3', 'plstrs_thk_fem.fem'], ['MB1', 'Edit']]
+    
+    title = ['NX 1847','NX 1847']
+    
+   # title.append('2D Mapped Mesh')
+    
     
     #optimize_index = ST.HyPara_Optimize('Simcenter 12',segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IGrid_Search()
+    for i in range(len(title)):
     
-    ST.Search_Engine('NX 1847',['MB1','ManageddddMaterials'],segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IOperate()  
+        ST.Search_Engine(title[i],Action_Sequence[i],segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IOperate()  
+        
+        time.sleep(1)
