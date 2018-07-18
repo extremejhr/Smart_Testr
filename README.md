@@ -48,3 +48,4 @@ Roadmap：
     
     a. Testing more complex input and actions.
     b. Create the input file format class.
+    c. Bayes classfier to correct the ocr results.
