@@ -66,6 +66,8 @@ class Image_Capture(object):
             bbox = win32gui.GetWindowRect(self.handle)
             img = np.array(ImageGrab.grab(bbox))
             
+            #pyautogui.click((bbox[2]+bbox[0])/2,bbox[1]+5)
+            
         window_position = win32gui.GetWindowRect(self.handle)    
         
         return img, window_position
@@ -97,7 +99,7 @@ class Image_Process(object):
               
         (_, thresh_seg) = cv2.threshold(gray, segmentation_threshold, 255, cv2.THRESH_BINARY_INV) 
                
-        thresh_ocr =cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,3,2)
+        thresh_ocr =cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV,3,1)
              
         edges = cv2.Canny(thresh_seg,100,200)
         
@@ -142,13 +144,11 @@ class Image_Process(object):
     
 class Image_Analyze(object): 
     
-    def __init__(self,Thresh_Seg, Kernel_Dilate_Region, Kernel_Dilate_Box, Scale):
+    def __init__(self,Thresh_Seg, Kernel_Dilate_Region, Scale):
         
         self.thresh_seg = Thresh_Seg
         
         self.kernel_dilate_reg = Kernel_Dilate_Region
-        
-        self.kernel_dilate_box = Kernel_Dilate_Box
         
         self.scalex = Scale[0] 
 
@@ -219,19 +219,99 @@ class Image_Analyze(object):
       
         #cv2.imshow('',thresh_region)
         #cv2.waitKey()
-        return region_coordinates, thresh_region    
+        return region_coordinates, thresh_region 
     
-    def IBoundary(self):
+    def Box_Eater(self, Region_Coordinates):
+        
+        region_coordinates = Region_Coordinates
+        
+        region_coordinates_temp = region_coordinates
+        
+        break_flag=0
+        
+        for i in range(len(region_coordinates_temp)):
+            
+            if break_flag == 1:
+                
+                break
+            
+            for j in range(len(region_coordinates_temp)):
+                
+                x10 = region_coordinates_temp[i][0]
+                y10 = region_coordinates_temp[i][1]
+                x20 = region_coordinates_temp[i][2]
+                y20 = region_coordinates_temp[i][3]  
+                
+                h1 = y20 - y10
+                w1 = x20 - x10
+                
+                x11 = region_coordinates_temp[j][0]
+                y11 = region_coordinates_temp[j][1]
+                x21 = region_coordinates_temp[j][2]
+                y21 = region_coordinates_temp[j][3] 
+
+                h2 = y21 - y11
+                w2 = x21 - x11   
+                          
+                    
+                if i!=j and (abs(x20-x11) <= (w1+w2)) and (abs(x21 - x10) <= (w1+w2)) and (abs(y21-y10) <= (h1+h2)) and (abs(y20-y11) <= (h1+h2)):
+
+                    x1 = min(x10,x11)
+                    y1 = min(y10,y11)
+                    x2 = max(x20,x21)
+                    y2 = max(y20,y21)
+                    
+                    region_coordinates = np.delete(region_coordinates,[i,j],axis = 0)               
+                    region_coordinates = np.append(region_coordinates,np.int0([[x1,y1,x2,y2]]),axis=0) 
+                    
+                    break_flag = 1
+                    
+                    break
+                         
+        return region_coordinates
+    
+    def getKey(self,item):
+        
+        return len(item)
+    
+    def IBoundary(self,thresh_ocr):
         
         kernel_dilate_reg = self.kernel_dilate_reg
         
-        kernel_dilate_box = self.kernel_dilate_box
-        
         thresh_seg = self.thresh_seg 
         
-        region_coordinates, thresh_region = self.IRegion(thresh_seg,kernel_dilate_reg)
+        region_coordinates, thresh_region  = self.IRegion(thresh_seg,kernel_dilate_reg)
         
-        box_coordinates, _ = self.IRegion(thresh_region, kernel_dilate_box) 
+        region_coordinates_prev = region_coordinates
+     
+        box_diff = 1
+        
+        while box_diff > 0 :
+                 
+            region_coordinates_new = self.Box_Eater(region_coordinates_prev)
+            
+            #print(len(region_coordinates_prev),len(region_coordinates_new))
+            
+            box_diff = abs(len(region_coordinates_prev)-len(region_coordinates_new))
+            
+            region_coordinates_prev = region_coordinates_new
+            
+         
+        for i in range(len(region_coordinates_prev)):
+                
+                x1 = region_coordinates_prev[i][0]
+                y1 = region_coordinates_prev[i][1]
+                x2 = region_coordinates_prev[i][2]
+                y2 = region_coordinates_prev[i][3]
+                
+                box_b =  np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]]) 
+                
+                cv2.drawContours(thresh_ocr, [box_b], -1, (0, 0, 0), 1)    
+                
+        cv2.imshow('',thresh_ocr)
+        cv2.waitKey()
+        
+        box_coordinates = region_coordinates_prev
         
         group_coordinates = []
 
@@ -242,7 +322,7 @@ class Image_Analyze(object):
             x2 = box_coordinates[i][2]
             y2 = box_coordinates[i][3]  
 
-            group_pack = []                                    
+            group_pack = []                             
 
             for j in range(len(region_coordinates)):   
                  
@@ -257,7 +337,9 @@ class Image_Analyze(object):
              
             if len(group_pack) > 0 :
             
-                group_coordinates.append(group_pack) 
+                group_coordinates.append(group_pack)
+                
+                group_coordinates = sorted(group_coordinates,key=self.getKey, reverse = True)
    
         return group_coordinates
     
@@ -450,7 +532,7 @@ class MK_Event(object):
 
 class Search_Engine(object):
     
-        def __init__(self,Title,Action_Sequence,Segmentation_Threshold,Kernel_Dilate_Region,Kernel_Dilate_Box,Scale):
+        def __init__(self,Title,Action_Sequence,Segmentation_Threshold,Kernel_Dilate_Region,Scale):
         
             self.title = Title
             
@@ -461,8 +543,6 @@ class Search_Engine(object):
             self.segmentation_threshold = Segmentation_Threshold
             
             self.kernel_dilate_reg = Kernel_Dilate_Region
-        
-            self.kernel_dilate_box = Kernel_Dilate_Box
             
             self.scale = Scale
                   
@@ -476,17 +556,13 @@ class Search_Engine(object):
             
             kernel_dilate_reg = self.kernel_dilate_reg 
             
-            kernel_dilate_reg = self.kernel_dilate_reg
-            
-            kernel_dilate_box = self.kernel_dilate_box
-            
             scale = self.scale          
             
             img, window_position = Image_Capture(title).ICapture()
     
             thresh_seg, thresh_ocr = Image_Process(img, segmentation_threshold).IProcess()
             
-            group_coordinates = Image_Analyze(thresh_seg, kernel_dilate_reg, kernel_dilate_box, scale).IBoundary()
+            group_coordinates = Image_Analyze(thresh_seg, kernel_dilate_reg, scale).IBoundary(thresh_ocr)
             
             operation_coordinates = Image_OCR(thresh_ocr, window_position ,group_coordinates,target_keyword).ISearch()
         
@@ -511,7 +587,7 @@ class Search_Engine(object):
 
 class HyPara_Optimize(object): 
 
-    def __init__(self, Title, Segmentation_Threshold_Group, Kernel_Dilate_Region_Group , Kernel_Dilate_Box_Group , Scale_Group ):
+    def __init__(self, Title, Segmentation_Threshold_Group, Kernel_Dilate_Region_Group , Scale_Group ):
         
         self.title = Title
         
