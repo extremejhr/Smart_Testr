@@ -46,10 +46,13 @@ if __name__ == '__main__':
     
    # title.append('2D Mapped Mesh')
     
-    
+    ST.Tesseract_Training('Physical Property',segmentation_threshold_group,kernel_dilate_reg_group,scale_group).ISample()  
+
     #optimize_index = ST.HyPara_Optimize('Simcenter 12',segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IGrid_Search()
+    '''
     for i in range(len(title)):
     
         ST.Search_Engine(title[i],Action_Sequence[i],segmentation_threshold_group,kernel_dilate_reg_group,scale_group).IOperate()  
         
         time.sleep(1)
+    '''

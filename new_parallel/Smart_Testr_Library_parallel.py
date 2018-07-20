@@ -308,8 +308,8 @@ class Image_Analyze(object):
                 
                 cv2.drawContours(thresh_ocr, [box_b], -1, (0, 0, 0), 1)    
                 
-        cv2.imshow('',thresh_ocr)
-        cv2.waitKey()
+        #cv2.imshow('',thresh_ocr)
+        #cv2.waitKey()
         
         box_coordinates = region_coordinates_prev
         
@@ -363,7 +363,7 @@ class Image_OCR(object):
         
         self.target_keyword = Target_Keyword
         
-    def IOCR(self, Region_Coordinates) :
+    def IOCR(self, Region_Coordinates,training_flag = None,save_path = None) :
         
         region_coordinates = Region_Coordinates
         
@@ -383,7 +383,9 @@ class Image_OCR(object):
         
         OCR_string_processed = ''.join(e for e in OCR_string if e.isalnum() or e.isspace())
         
-        cv2.imwrite('region\\s_'+OCR_string_processed+'.png',crop_img)
+        if len(OCR_string_processed)>0 and training_flag is True:
+        
+            cv2.imwrite('Sample\\'+save_path+'\\'+OCR_string_processed+'.png',crop_img)
                        
         return OCR_string_processed, region_coordinates
    
@@ -594,8 +596,6 @@ class HyPara_Optimize(object):
         self.segmentation_threshold_group = Segmentation_Threshold_Group
         
         self.kernel_dilate_reg_group = Kernel_Dilate_Region_Group
-    
-        self.kernel_dilate_box_group = Kernel_Dilate_Box_Group
         
         self.scale_group = Scale_Group        
         
@@ -607,15 +607,12 @@ class HyPara_Optimize(object):
         
         kernel_dilate_reg_group = self.kernel_dilate_reg_group
         
-        kernel_dilate_box_group = self.kernel_dilate_box_group
-        
         scale_group = self.scale_group  
         
         target_keyword = 'GRIDSearchWordTemp'
         
         p1_group = list(range(len(segmentation_threshold_group)))
         p2_group = list(range(len(kernel_dilate_reg_group)))
-        p3_group = list(range(len(kernel_dilate_box_group)))
         p4_group = list(range(len(scale_group)))
         
         positive_value_p = 0
@@ -644,7 +641,60 @@ class HyPara_Optimize(object):
         
         return optimize_index
             
-###############################################################################  
+############################################################################### 
+        
+###############################################################################
+#
+# Tesseract 4.0 Training - image & text capture
+#
+###############################################################################
+
+class Tesseract_Training(object):
+    
+    def __init__(self,Title,Segmentation_Threshold,Kernel_Dilate_Region,Scale):
+    
+        self.title = Title
+        
+        self.segmentation_threshold = Segmentation_Threshold
+        
+        self.kernel_dilate_reg = Kernel_Dilate_Region
+        
+        self.scale = Scale
+              
+    def ISample(self):            
+        
+        title = self.title
+        
+        target_word = 'Trainingkeyword'
+        
+        segmentation_threshold = self.segmentation_threshold
+        
+        kernel_dilate_reg = self.kernel_dilate_reg 
+        
+        scale = self.scale          
+        
+        img, window_position = Image_Capture(title).ICapture()
+
+        thresh_seg, thresh_ocr = Image_Process(img, segmentation_threshold).IProcess()
+        
+        group_coordinates = Image_Analyze(thresh_seg, kernel_dilate_reg, scale).IBoundary(thresh_ocr)
+        
+        Image = Image_OCR(thresh_ocr, window_position ,group_coordinates,target_word)
+ 
+        if os.path.isdir('Sample\\'+title):
+            
+            shutil.rmtree('Sample\\'+title)
+            
+        os.makedirs('Sample\\'+title)          
+        
+        for i in range(len(group_coordinates)):
+            
+            for j in range(len(group_coordinates[i])):
+                
+                Image.IOCR(group_coordinates[i][j],training_flag=True,save_path=title)
+            
+           
+###############################################################################      
 
 ###############################################################################
 #
