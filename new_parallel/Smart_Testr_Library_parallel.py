@@ -17,7 +17,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import Levenshtein
-pytesseract.pytesseract.tesseract_cmd = 'E:\\Development\\Tesseract-OCR\\tesseract'
+#pytesseract.pytesseract.tesseract_cmd = 'E:\\Development\\Tesseract-OCR\\tesseract'
 
 import pyautogui
 import win32gui # OCR combined with win32 get handler and position.
@@ -64,6 +64,7 @@ class Image_Capture(object):
         else:
             
             bbox = win32gui.GetWindowRect(self.handle)
+        
             img = np.array(ImageGrab.grab(bbox))
             
             #pyautogui.click((bbox[2]+bbox[0])/2,bbox[1]+5)
