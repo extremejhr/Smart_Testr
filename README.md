@@ -49,3 +49,16 @@ Roadmap：
     a. Testing more complex input and actions.
     b. Create the input file format class.
     c. Bayes classfier to correct the ocr results.
+    
+21.07.2018 version 0.0.0.1.x
+
+1. Delete the box coordinates function and hyper-parameter for decreasing the infulence of different resolution.
+2. Add new function of grouping region coordinates. The efficiency decrease slightly but more stable.
+3. Add Tesseract Training class for capturing the icon samples. (Considering for the new traindata creation)
+
+4. Next Step:
+
+    a. Add try and exception to capture any error and exception situation.
+    b. Add icon matchTemplate in opencv and action record.
+    
+    
