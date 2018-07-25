@@ -61,4 +61,15 @@ Roadmap：
     a. Add try and exception to capture any error and exception situation.
     b. Add icon matchTemplate in opencv and action record.
     
+25.07.2018 version 0.0.0.1.x
+
+New idea:
+
+1. After mouse and keyboard operation, detect and only OCR the difference image between previous and current window capture image.
+2. Text and its nearest icon synchronization. if text maching fail, conduct icon template match.
+3. Modify the image capture strategy, no need to specify the operation window title.
+4. Apply more easy and obvious way to design the operation sequence, maybe in a GUI. Tools no clues now.
+
+Questions need to be answered: is it easy to use? does it speed up the testing process?
+    
     
