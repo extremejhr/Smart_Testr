@@ -25,6 +25,9 @@ import Levenshtein
 import os
 import time
 
+import pythoncom
+import PyHook3
+
 import Smart_Testr_Library_parallel as ST
 
 #pytesseract.pytesseract.tesseract_cmd = 'E:\\Machine Learning\\Tesseract-OCR\\tesseract'
@@ -44,9 +47,9 @@ if __name__ == '__main__':
     
     scale_group=[0.1,0.25]
     
-    Action_Sequence =[['MB1', 'Element Quality'], ['MB1', 'Selected'], ['MB1', 'Displayed']]
+    Action_Sequence =[['MB1', 'Load Type'], ['MB1', 'Pressure'], ['MB1', 'Normal pressure on 2D element or 3D element']]
     
-    title = ['NX 1847.1500','Element Quality','Element Quality']
+    title = ['Simcenter','Simcenter','Pressure']
     
    # title.append('2D Mapped Mesh')
     
@@ -59,3 +62,10 @@ if __name__ == '__main__':
         ST.Search_Engine(title[i],Action_Sequence[i],segmentation_threshold_group,kernel_dilate_reg_group,scale_group).IOperate()  
         
         time.sleep(1)
+'''
+
+a = ST.Icon_Capture()
+
+a.capture()
+
+'''

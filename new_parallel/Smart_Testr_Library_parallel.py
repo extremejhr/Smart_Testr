@@ -21,6 +21,8 @@ import Levenshtein
 
 import pyautogui
 import win32gui # OCR combined with win32 get handler and position.
+import pythoncom
+import PyHook3
 
 import os
 
@@ -29,6 +31,8 @@ import shutil
 import time
 
 import concurrent.futures
+
+import ctypes
 
 
 ###############################################################################
@@ -526,6 +530,59 @@ class MK_Event(object):
             print('Wrong Action Key!')
              
 ###############################################################################  
+            
+###############################################################################
+#
+# Icon Template Maching - For non-text operation
+#
+###############################################################################  
+
+class Icon_Capture(object):
+    
+    def __init__(self):
+        
+        self.hm = None
+        
+    def on_mouse_event(self,event):
+         
+        if event.MessageName == "mouse left down":
+            
+            self.old_x, self.old_y = event.Position
+            
+        if event.MessageName == "mouse left up":
+            
+            self.new_x, self.new_y = event.Position
+
+            self.hm.UnhookMouse()
+            
+            self.hm = None
+
+        self.image = ImageGrab.grab((self.old_x, self.old_y, self.new_x, self.new_y))
+        
+        self.image.show()
+        
+        if self.image.shape[0]>0:
+            
+            ctypes.windll.user32.PostQuitMessage(0)
+            
+            print('Already Quit!')
+        
+        return True
+    
+    def capture(self):
+        
+        self.hm = PyHook3.HookManager()
+        
+        self.hm.MouseAll = self.on_mouse_event
+        
+        self.hm.HookMouse()
+        
+        pythoncom.PumpWaitingMessages()
+        
+        
+          
+###############################################################################
+            
 
 ###############################################################################
 #
@@ -549,7 +606,7 @@ class Search_Engine(object):
             
             self.scale = Scale
                   
-        def ILocate(self):            
+        def ILocate_OCR(self):            
             
             title = self.title
             
@@ -571,11 +628,15 @@ class Search_Engine(object):
         
             return operation_coordinates
         
+        def ILocate_MT(self):
+            
+            pass
+        
         def IOperate(self):
             
             action_key = self.action_key
             
-            operation_coordinates= self.ILocate()
+            operation_coordinates= self.ILocate_OCR()
            
             MK_Event(action_key, operation_coordinates).IOperate()
                     
@@ -696,6 +757,10 @@ class Tesseract_Training(object):
             
            
 ###############################################################################      
+
+
+
+
 
 ###############################################################################
 #
