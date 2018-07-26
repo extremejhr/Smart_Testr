@@ -57,13 +57,13 @@ class Image_Capture(object):
                 
                 self.handle = hwnd     
    
-    def ICapture(self):
+    def ICapture_Canvas(self):
         
         win32gui.EnumWindows(self.Handle_Catch, None)
         
         if self.handle is None:
             
-            print('No Window Found!')
+            print('No Main Window Found!')
             
         else:
             
@@ -71,11 +71,41 @@ class Image_Capture(object):
         
             img = np.array(ImageGrab.grab(bbox))
             
-            #pyautogui.click((bbox[2]+bbox[0])/2,bbox[1]+5)
-            
-        window_position = win32gui.GetWindowRect(self.handle)    
+        window_position = win32gui.GetWindowRect(self.handle) 
+        
+        cv2.imwrite('running_temp_file\\'+self.title+'img_previous.png',img)
         
         return img, window_position
+    
+    def ICapture_Operation(self):
+        
+        img_previous = cv2.imread('running_temp_file\\'+self.title+'img_previous.png')
+        
+        img_current, window_position_current = self.ICapture_Canvas()
+        
+        diff = cv2.absdiff(img_previous, img_current)
+        
+        mask = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+        
+        index = np.where(mask>1)
+        
+        if len(index[0])>0:
+        
+            boudary = [min(index[0]), min(index[1]), max(index[0]), max(index[1])]
+            
+            img = img_current[boudary[0]:boudary[1],boudary[2]:boudary[3]]
+            
+            window_position = boudary + window_position_current
+            
+        else:
+            
+            img = img_current
+            
+            window_position = window_position_current
+        
+        return img, window_position
+        
+        
     
 ###############################################################################  
 
@@ -618,7 +648,7 @@ class Search_Engine(object):
             
             scale = self.scale          
             
-            img, window_position = Image_Capture(title).ICapture()
+            img, window_position = Image_Capture(title).ICapture_Operation()
     
             thresh_seg, thresh_ocr = Image_Process(img, segmentation_threshold).IProcess()
             
