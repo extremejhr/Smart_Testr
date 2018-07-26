@@ -92,5 +92,5 @@ for ctrl in all_ctrls:
     
         print(ctrl.window_text())
 
-Combine pywinauto and OCR to locate the operation!!!
+Create inheritance class of pywinauto.application.WindowSpecification in order to get the text information.
         
