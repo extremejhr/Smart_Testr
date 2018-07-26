@@ -77,9 +77,13 @@ Questions need to be answered: is it easy to use? does it speed up the testing p
 pywinauto - class Windowspecification: 
 
 app =  Application().connect(process = ''/title_re = '')
+
 dlg = app.window(title = '')
+
 criteria = dlg.criteria
+
 this_ctrl=dlg._WindowSpecification__resolve_control(dlg.criteria,)[-1]
+
 all_ctrls = [this_ctrl, ] + this_ctrl.descendants()
 
 for ctrl in all_ctrls:
@@ -87,3 +91,6 @@ for ctrl in all_ctrls:
     if len(ctrl.window_text())>0:
     
         print(ctrl.window_text())
+
+Combine pywinauto and OCR to locate the operation!!!
+        
