@@ -93,4 +93,11 @@ for ctrl in all_ctrls:
         print(ctrl.window_text())
 
 Create inheritance class of pywinauto.application.WindowSpecification in order to get the text information.
+
+
+27.07.2018 version 0.0.0.1.x:
+
+pywinauto - hwnwrapper.Rectangle() position coordinates. ('Simulation Navigator' - the left ribbon region)
+
+left tap - dlg['TabControl'].Select(1)
         
