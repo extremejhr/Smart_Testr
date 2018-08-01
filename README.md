@@ -100,4 +100,16 @@ Create inheritance class of pywinauto.application.WindowSpecification in order t
 pywinauto - hwnwrapper.Rectangle() position coordinates. ('Simulation Navigator' - the left ribbon region)
 
 left tap - dlg['TabControl'].Select(1)
+
+01.08.2018 version 0.0.0.1.x:
+
+Tooth is paining ...
+
+New Update:
+
+New OCR string comparision algrothim:
+   
+   a. Store the Levenshtein.ratio of one Group Region which is larger than 0.5;
+   b. Find the closest group;
+   c. If there are len(key_word)-1 box have more than 0.7 Levenshtein.ratio, the operation coordinates will be the center of this group.
         
