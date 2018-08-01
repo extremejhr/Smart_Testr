@@ -107,9 +107,30 @@ Tooth is paining ...
 
 New Update:
 
-New OCR string comparision algrothim:
+1.New OCR string comparision algrothim:
    
-   a. Store the Levenshtein.ratio of one Group Region which is larger than 0.5;
-   b. Find the closest group;
-   c. If there are len(key_word)-1 box have more than 0.7 Levenshtein.ratio, the operation coordinates will be the center of this group.
+   1. Store the Levenshtein.ratio of one Group Region which is larger than 0.5;
+   2. Find the closest group;
+   3. If there are len(key_word)-1 box have more than 0.7 Levenshtein.ratio, the operation coordinates will be the center of this group.
+
+Ibuprofen Ура!!!
+
+2. Something need to be mentioned:
+
+   Currently one CAE project focused on the UI Automation Test has been established. So it seems to make Smart-Testr becomes unnecessary. 
+   
+   In this project, UI operation can be recorded and validated in order to create UI Autotest. In other words, this project is designed for devs and these UI autotests still need testrs to record and generate.
+   
+   One thing need to be mentioned again: Smart-Testr is a tool designed for tester and QA. Its initial purpose is to reduce the work and increse the efficiency of testing. It tries to solve the 'Last Mile' problem in testing.
+   
+   Many tools have been developed for Devs to analyze and locate the error codes, but there is little tool testrs can use to find the errors and assertions. It is correct that testr's main object is to help the dev find and fix the program faults, while testing is also an important part of one software development. If one tool can help testr to test the program more efficiently, testr can take more attention on the design of test case, which could increase the testing coverage and quality. So This is why I would like to create Smart-Testr.
+   
+   Smart-Testr is still a little baby, there are so many drawbacks and errors in this program:Low efficiency, inacurrate OCR location, the theme color and layout have big influence... So much works need to be done. I hope Smart-Testr could have a little help to testrs in future.
+   
+   
+  
+   
+   
+   
+   
         
