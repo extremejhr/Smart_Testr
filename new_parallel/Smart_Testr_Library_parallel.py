@@ -5,36 +5,29 @@ Created on Fri Jul 13 12:31:16 2018
 @author: xqk9qq
 """
 ###############################################################################
-#
 # Import Modules
-#
+# pytesseract import module should be modified if 'Image has no attribute Image' appears.
+# pytesseract.pytesseract.tesseract_cmd = 'E:\\Development\\Tesseract-OCR\\tesseract'
+# pywinauto.application has been modified : add new funcition to achieve the control identifiers.
 ###############################################################################
 from PIL import Image, ImageGrab 
-# pytesseract import module should be modified if 'Image has no attribute Image' appears.
-
 import pytesseract
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 import Levenshtein
-#pytesseract.pytesseract.tesseract_cmd = 'E:\\Development\\Tesseract-OCR\\tesseract'
-
 import pyautogui
-import win32gui # OCR combined with win32 get handler and position.
+import pywinauto
+import win32gui 
 import pythoncom
 import PyHook3
-
 import os
-
 import shutil
-
 import time
-
 import concurrent.futures
-
 import ctypes
 
-
+import itertools
 ###############################################################################
 #
 # Image Capture - Only suitable for Win32 application
@@ -57,7 +50,7 @@ class Image_Capture(object):
                 
                 self.handle = hwnd     
    
-    def ICapture_Canvas(self):
+    def ICapture(self):
         
         win32gui.EnumWindows(self.Handle_Catch, None)
         
@@ -76,36 +69,6 @@ class Image_Capture(object):
         cv2.imwrite('running_temp_file\\'+self.title+'img_previous.png',img)
         
         return img, window_position
-    
-    def ICapture_Operation(self):
-        
-        img_previous = cv2.imread('running_temp_file\\'+self.title+'img_previous.png')
-        
-        img_current, window_position_current = self.ICapture_Canvas()
-        
-        diff = cv2.absdiff(img_previous, img_current)
-        
-        mask = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-        
-        index = np.where(mask>1)
-        
-        if len(index[0])>0:
-        
-            boudary = [min(index[0]), min(index[1]), max(index[0]), max(index[1])]
-            
-            img = img_current[boudary[0]:boudary[1],boudary[2]:boudary[3]]
-            
-            window_position = boudary + window_position_current
-            
-        else:
-            
-            img = img_current
-            
-            window_position = window_position_current
-        
-        return img, window_position
-        
-        
     
 ###############################################################################  
 
@@ -452,9 +415,7 @@ class Image_OCR(object):
             
             operation_coordinates = []
             
-            medical_results = [0]*len(target_keyword_i)
-            
-            medical_positive_coordinates =[[]]*len(target_keyword_i)
+            medical_results = [[]]*len(target_keyword_i)
             
             Region_Coordinates = group_coordinates[i]
             
@@ -488,26 +449,158 @@ class Image_OCR(object):
                 
                 print(OCR_string_processed)
         
-                for j in range(len(OCR_string_processed)):
+                for j in range(len(target_keyword_i)):
+                    
+                    medical_results_k = []
                                           
-                    for k in range(len(target_keyword_i)):
+                    for k in range(len(OCR_string_processed)):
                         
-                        if (Levenshtein.ratio(OCR_string_processed[j], target_keyword_i[k]))>0.9:               
+                        indicator = Levenshtein.ratio(OCR_string_processed[k], target_keyword_i[j])
+    
+                        if indicator >= 0.5:
+    
+                            medical_results_k.append([indicator,region_coordinates[k],OCR_string_processed[k]])                            
+                    
+                    medical_results[j] = medical_results_k                        
+                        
+                def takeFirst(elem):
+                    
+                    return elem[0] 
+                
+                kid = 1
+                
+                length = []
+                
+                for i in range(len(target_keyword_i)):
+                    
+                    kid = kid * len(medical_results[i])
+                
+                    medical_results[i].sort(key=takeFirst,reverse=True)
+                    
+                    length.append(len(medical_results[i]))
+                    
+                print(medical_results)
+                
+                if kid>0:
+                    
+                    distance = []
+                    
+                    if len(target_keyword_i)>1:
+                        
+                        index_num = [[i,j] for i in range(length[0]) for j in range(length[1])]
+                        
+                        index_num_final =[]
+                        
+                        if len(length) > 2:
                             
-                            medical_results[k] = 1 
-                            
-                            medical_positive_coordinates[k] = region_coordinates[j]
+                            for j in range(2,len(length)):
                                 
-                if sum(medical_results) == len(target_keyword_i):
+                                for m in range(length[j]):
+                                    
+                                    for i in range(len(index_num)):
+                                        
+                                        temp = index_num[i]
+                        
+                                        temp.append(m)
+                                        
+                                        index_num_final.append(temp)
+                                        
+                                index_num = index_num_final
                     
-                    x1m = (medical_positive_coordinates[0][0]) 
-                    y1m = (medical_positive_coordinates[0][1])
-                    x2m = (medical_positive_coordinates[0][2])
-                    y2m = (medical_positive_coordinates[0][3]) 
-                    
-                    operation_coordinates = [left+x1m+abs(x2m-x1m)/2, top+y1m+abs(y2m-y1m)/2]                   
-                                            
-                    break    
+                        
+                        rect_area = []
+                        
+                        for i in range(len(index_num)):
+                            
+                            index = index_num[i]
+                            
+                            rect_temp = []
+                            
+                            for j in range(len(index)):
+                        
+                                rect_temp.append(medical_results[j][index[j]][1])
+                                
+                            
+                            rect_temp = np.array(rect_temp)
+                            
+                            x1 = min(rect_temp[:,0])
+                            y1 = min(rect_temp[:,1])
+                            x2 = max(rect_temp[:,2])
+                            y2 = max(rect_temp[:,3])
+                            
+                            rect_area.append(abs(x2-x1)*abs(y2-y1))
+                        
+                        target_index = index_num[rect_area.index(min(rect_area))]
+                        
+                        print(rect_area)
+                        
+                        print(target_index)
+                        
+                        distance_temp=[]
+                        
+                        for i in range(len(target_index)):
+                            
+                            for j in range(len(target_index)):
+                                
+                                if i != j:
+                        
+                                    [xi1,yi1,xi2,yi2] = medical_results[i][target_index[i]][1]
+                                    
+                                    [xj1,yj1,xj2,yj2] = medical_results[j][target_index[j]][1]
+                                    
+                                    distance_x = min(abs(xi1-xj2),abs(xj1-xi2),abs(xi1-xj1),abs(xi2-xj2))
+                                    distance_y = min(abs(yi1-yj2),abs(yj1-yi2),abs(yi1-yj1),abs(yi2-yj2))
+                                    
+                                    distance_temp.append([min(distance_x,distance_y),max(distance_x,distance_y)])
+                        
+                        distance_temp = np.array(distance_temp)
+                        
+                        distance_temp_max = min(distance_temp[:,1])
+                        distance_temp_min = max(distance_temp[:,0])
+                        
+                        distance = [distance_temp_min,distance_temp_max]
+                        
+                        print (distance)
+                        
+                        op_coors = []
+                        
+                        for i in range(len(target_index)):
+                            
+                            op_coors.append(medical_results[i][target_index[i]][1])
+                            
+                        op_coors = np.array(op_coors)
+                       
+                        x1m = min(op_coors[:,0])
+                        y1m = min(op_coors[:,1])
+                        x2m = max(op_coors[:,2])
+                        y2m = max(op_coors[:,3])
+                       
+                        
+                        passport = 0
+                        
+                        for i in range(len(target_index)):
+                        
+                            if medical_results[i][target_index[i]][0]>0.7:
+                                
+                                passport = 1/(len(target_index)-1)+passport
+                                    
+                    else:
+                        
+                        distance = [0,0]
+                        
+                        if medical_results[0][0][0]>0.7:
+                            
+                            passport = 1
+                            
+                        [x1m,y1m,x2m,y2m] = medical_results[0][0][1]    
+                                       
+                    if passport >=1 and distance[0]<=10 and distance[1]<=10:
+                        
+                         
+                        
+                        operation_coordinates = [left+x1m+abs(x2m-x1m)/2, top+y1m+abs(y2m-y1m)/2]                   
+                                                
+                        break    
         
         end = time.time()
         
@@ -648,7 +741,7 @@ class Search_Engine(object):
             
             scale = self.scale          
             
-            img, window_position = Image_Capture(title).ICapture_Operation()
+            img, window_position = Image_Capture(title).ICapture()
     
             thresh_seg, thresh_ocr = Image_Process(img, segmentation_threshold).IProcess()
             

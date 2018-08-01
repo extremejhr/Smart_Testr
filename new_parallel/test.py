@@ -45,11 +45,11 @@ if __name__ == '__main__':
     
     kernel_dilate_reg_group=kernel_dilate_reg2  
     
-    scale_group=[0.1,0.25]
+    scale_group=[0.10,0.2]
     
-    Action_Sequence =[['MB1', 'Load Type'], ['MB1', 'Pressure'], ['MB1', 'Normal pressure on 2D element or 3D element']]
+    Action_Sequence =[['MB1', '2D Mesh'], ['MB1', 'CPLSTS8'], ['MB1', 'Show Element Labels']]
     
-    title = ['Simcenter','Simcenter','Pressure']
+    title = ['Simcenter 3D','2D Mesh','Element Quality']
     
    # title.append('2D Mapped Mesh')
     
@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     #optimize_index = ST.HyPara_Optimize('Simcenter 12',segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IGrid_Search()
 
-    for i in range(len(title)):
+    for i in range(1):
     
         ST.Search_Engine(title[i],Action_Sequence[i],segmentation_threshold_group,kernel_dilate_reg_group,scale_group).IOperate()  
         
