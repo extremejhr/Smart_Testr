@@ -46,9 +46,9 @@ Roadmap：
  
  6. Next step:
     
-    a. Testing more complex input and actions.
-    b. Create the input file format class.
-    c. Bayes classfier to correct the ocr results.
+    a. Testing more complex input and actions.\n
+    b. Create the input file format class.\n
+    c. Bayes classfier to correct the ocr results.\n
     
 21.07.2018 version 0.0.0.1.x
 
