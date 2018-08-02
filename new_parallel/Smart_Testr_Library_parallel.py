@@ -27,6 +27,8 @@ import time
 import concurrent.futures
 import ctypes
 
+import copy
+
 import itertools
 ###############################################################################
 #
@@ -295,19 +297,19 @@ class Image_Analyze(object):
             region_coordinates_prev = region_coordinates_new
             
          
-        for i in range(len(region_coordinates_prev)):
+        for i in range(len(region_coordinates)):
                 
-                x1 = region_coordinates_prev[i][0]
-                y1 = region_coordinates_prev[i][1]
-                x2 = region_coordinates_prev[i][2]
-                y2 = region_coordinates_prev[i][3]
+                x1 = region_coordinates[i][0]
+                y1 = region_coordinates[i][1]
+                x2 = region_coordinates[i][2]
+                y2 = region_coordinates[i][3]
                 
                 box_b =  np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]]) 
                 
                 cv2.drawContours(thresh_ocr, [box_b], -1, (0, 0, 0), 1)    
                 
-        #cv2.imshow('',thresh_ocr)
-        #cv2.waitKey()
+        cv2.imshow('',thresh_ocr)
+        cv2.waitKey()
         
         box_coordinates = region_coordinates_prev
         
@@ -415,7 +417,9 @@ class Image_OCR(object):
             
             operation_coordinates = []
             
-            medical_results = [[]]*len(target_keyword_i)
+            medical_results_h = [[]]*len(target_keyword_i)
+            
+            medical_results_l = [[]]*len(target_keyword_i)
             
             Region_Coordinates = group_coordinates[i]
             
@@ -451,18 +455,27 @@ class Image_OCR(object):
         
                 for j in range(len(target_keyword_i)):
                     
-                    medical_results_k = []
-                                          
+                    medical_results_h_k = []
+                    medical_results_l_k = []
+
                     for k in range(len(OCR_string_processed)):
                         
                         indicator = Levenshtein.ratio(OCR_string_processed[k], target_keyword_i[j])
     
-                        if indicator >= 0.5:
+                        if indicator >= 0.7:
     
-                            medical_results_k.append([indicator,region_coordinates[k],OCR_string_processed[k]])                            
+                            medical_results_h_k.append([indicator,region_coordinates[k],OCR_string_processed[k]]) 
+                            
+                        if indicator >=0.5:
+                            
+                            medical_results_l_k.append([indicator,region_coordinates[k],OCR_string_processed[k]]) 
+                            
                     
-                    medical_results[j] = medical_results_k                        
-                        
+                    medical_results_h[j] = medical_results_h_k                        
+                    
+                    medical_results_l[j] = medical_results_l_k  
+                       
+                    
                 def takeFirst(elem):
                     
                     return elem[0] 
@@ -472,18 +485,33 @@ class Image_OCR(object):
                 length = []
                 
                 for i in range(len(target_keyword_i)):
+                
+                    medical_results_h[i].sort(key=takeFirst,reverse=True)
+                    medical_results_l[i].sort(key=takeFirst,reverse=True)
+                    
+                medical_results = medical_results_h            
+                
+                for i in range(len(target_keyword_i)):
                     
                     kid = kid * len(medical_results[i])
-                
-                    medical_results[i].sort(key=takeFirst,reverse=True)
                     
-                    length.append(len(medical_results[i]))
+                if kid == 0:
                     
-                print(medical_results)
+                    medical_results =  medical_results_l
+                    
+                    kid = 1
+                                     
+                for i in range(len(target_keyword_i)):
+                    
+                    kid = kid * len(medical_results[i])   
+                    
+                    length.append(len(medical_results[i]))    
+                    
+                print('Medical Results = ',medical_results)
                 
                 if kid>0:
-                    
-                    distance = []
+    
+                    index_num = []
                     
                     if len(target_keyword_i)>1:
                         
@@ -499,14 +527,16 @@ class Image_OCR(object):
                                     
                                     for i in range(len(index_num)):
                                         
-                                        temp = index_num[i]
+                                        temp = []
+                                        
+                                        temp = copy.deepcopy(index_num[i])
                         
                                         temp.append(m)
                                         
                                         index_num_final.append(temp)
                                         
-                                index_num = index_num_final
-                    
+                                index_num = index_num_final                             
+                        
                         
                         rect_area = []
                         
@@ -518,8 +548,7 @@ class Image_OCR(object):
                             
                             for j in range(len(index)):
                         
-                                rect_temp.append(medical_results[j][index[j]][1])
-                                
+                                rect_temp.append(medical_results[j][index[j]][1])                               
                             
                             rect_temp = np.array(rect_temp)
                             
@@ -529,38 +558,32 @@ class Image_OCR(object):
                             y2 = max(rect_temp[:,3])
                             
                             rect_area.append(abs(x2-x1)*abs(y2-y1))
+                            
                         
                         target_index = index_num[rect_area.index(min(rect_area))]
                         
-                        print(rect_area)
                         
-                        print(target_index)
+                        print('Cluster Group = ',rect_area)
                         
-                        distance_temp=[]
+                        print('Positive Indicator = ',target_index)
                         
-                        for i in range(len(target_index)):
+                        distance_logic = 0
+                        
+                        distance_index = list(itertools.combinations(list(range(len(target_index))),2))
+                        
+                        for k in range(len(distance_index)):
                             
-                            for j in range(len(target_index)):
-                                
-                                if i != j:
-                        
-                                    [xi1,yi1,xi2,yi2] = medical_results[i][target_index[i]][1]
-                                    
-                                    [xj1,yj1,xj2,yj2] = medical_results[j][target_index[j]][1]
-                                    
-                                    distance_x = min(abs(xi1-xj2),abs(xj1-xi2),abs(xi1-xj1),abs(xi2-xj2))
-                                    distance_y = min(abs(yi1-yj2),abs(yj1-yi2),abs(yi1-yj1),abs(yi2-yj2))
-                                    
-                                    distance_temp.append([min(distance_x,distance_y),max(distance_x,distance_y)])
-                        
-                        distance_temp = np.array(distance_temp)
-                        
-                        distance_temp_max = min(distance_temp[:,1])
-                        distance_temp_min = max(distance_temp[:,0])
-                        
-                        distance = [distance_temp_min,distance_temp_max]
-                        
-                        print (distance)
+                            i,j = distance_index[k]
+                            
+                            [xi1,yi1,xi2,yi2] = medical_results[i][target_index[i]][1]
+                            
+                            mid1 = [(xi2+xi1)/2,(yi1+yi2)/2]
+                            
+                            [xj1,yj1,xj2,yj2] = medical_results[j][target_index[j]][1]
+                            
+                            mid2 = [(xj2+xj1)/2,(yj1+yj2)/2]
+                            
+                            distance_logic = min(abs(mid1[0]-mid2[0]),abs(mid1[1]-mid2[1]))
                         
                         op_coors = []
                         
@@ -586,17 +609,17 @@ class Image_OCR(object):
                                     
                     else:
                         
-                        distance = [0,0]
+                        passport = 0
                         
-                        if medical_results[0][0][0]>0.7:
+                        distance_logic = 0
+                        
+                        if medical_results[0][0][0]>=0.8:
                             
                             passport = 1
                             
                         [x1m,y1m,x2m,y2m] = medical_results[0][0][1]    
                                        
-                    if passport >=1 and distance[0]<=10 and distance[1]<=10:
-                        
-                         
+                    if passport >=1 and distance_logic <=10:
                         
                         operation_coordinates = [left+x1m+abs(x2m-x1m)/2, top+y1m+abs(y2m-y1m)/2]                   
                                                 

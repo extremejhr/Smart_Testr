@@ -45,11 +45,13 @@ if __name__ == '__main__':
     
     kernel_dilate_reg_group=kernel_dilate_reg2  
     
-    scale_group=[0.10,0.2]
+    scale_group=[0.10,0.25]
     
-    Action_Sequence =[['MB1', '2D Mesh'], ['MB1', 'CPLSTS8'], ['MB1', 'Show Element Labels']]
+    Action_Sequence =[['MB1', 'Strength'], ['MB1', 'Compression (SC)'], ['MB1', 'Meshing']]
     
-    title = ['Simcenter 3D','2D Mesh','Element Quality']
+    title = ['Isotropic Material','Isotropic Material','Preferences']
+    
+    #ST.Tesseract_Training(title[0],segmentation_threshold_group,kernel_dilate_reg_group,scale_group).ISample()
     
    # title.append('2D Mapped Mesh')
     
@@ -57,11 +59,11 @@ if __name__ == '__main__':
 
     #optimize_index = ST.HyPara_Optimize('Simcenter 12',segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IGrid_Search()
 
-    for i in range(1):
+    for i in range(2):
     
         ST.Search_Engine(title[i],Action_Sequence[i],segmentation_threshold_group,kernel_dilate_reg_group,scale_group).IOperate()  
         
-        time.sleep(1)
+        time.sleep(2)
 '''
 
 a = ST.Icon_Capture()
