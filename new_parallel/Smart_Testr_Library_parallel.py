@@ -213,7 +213,7 @@ class Image_Analyze(object):
                 
                     region_coordinates = np.append(region_coordinates, corner,axis = 0)
                     
-                    cv2.drawContours(thresh_region, [box_b], -1, (255, 255, 255), -1)
+                    #cv2.drawContours(thresh_region, [box_b], -1, (255, 255, 255), -1)
                     
                     #cv2.drawContours(thresh_seg,[box],-1, (255, 255, 255), -1)
       
@@ -227,46 +227,40 @@ class Image_Analyze(object):
         
         region_coordinates_temp = region_coordinates
         
-        break_flag=0
+        index = list(itertools.combinations(list(range(len(region_coordinates_temp))),2))
         
-        for i in range(len(region_coordinates_temp)):
+        for k in range(len(index)):
             
-            if break_flag == 1:
+            i,j = index[k]
+            
+            x10 = region_coordinates_temp[i][0]
+            y10 = region_coordinates_temp[i][1]
+            x20 = region_coordinates_temp[i][2]
+            y20 = region_coordinates_temp[i][3]  
+            
+            h1 = y20 - y10
+            w1 = x20 - x10
+            
+            x11 = region_coordinates_temp[j][0]
+            y11 = region_coordinates_temp[j][1]
+            x21 = region_coordinates_temp[j][2]
+            y21 = region_coordinates_temp[j][3] 
+
+            h2 = y21 - y11
+            w2 = x21 - x11   
+                      
+                
+            if i!=j and (abs(x20-x11) <= (w1+w2)) and (abs(x21 - x10) <= (w1+w2)) and (abs(y21-y10) <= (h1+h2)) and (abs(y20-y11) <= (h1+h2)):
+
+                x1 = min(x10,x11)
+                y1 = min(y10,y11)
+                x2 = max(x20,x21)
+                y2 = max(y20,y21)
+                
+                region_coordinates = np.delete(region_coordinates,[i,j],axis = 0)               
+                region_coordinates = np.append(region_coordinates,np.int0([[x1,y1,x2,y2]]),axis=0) 
                 
                 break
-            
-            for j in range(len(region_coordinates_temp)):
-                
-                x10 = region_coordinates_temp[i][0]
-                y10 = region_coordinates_temp[i][1]
-                x20 = region_coordinates_temp[i][2]
-                y20 = region_coordinates_temp[i][3]  
-                
-                h1 = y20 - y10
-                w1 = x20 - x10
-                
-                x11 = region_coordinates_temp[j][0]
-                y11 = region_coordinates_temp[j][1]
-                x21 = region_coordinates_temp[j][2]
-                y21 = region_coordinates_temp[j][3] 
-
-                h2 = y21 - y11
-                w2 = x21 - x11   
-                          
-                    
-                if i!=j and (abs(x20-x11) <= (w1+w2)) and (abs(x21 - x10) <= (w1+w2)) and (abs(y21-y10) <= (h1+h2)) and (abs(y20-y11) <= (h1+h2)):
-
-                    x1 = min(x10,x11)
-                    y1 = min(y10,y11)
-                    x2 = max(x20,x21)
-                    y2 = max(y20,y21)
-                    
-                    region_coordinates = np.delete(region_coordinates,[i,j],axis = 0)               
-                    region_coordinates = np.append(region_coordinates,np.int0([[x1,y1,x2,y2]]),axis=0) 
-                    
-                    break_flag = 1
-                    
-                    break
                          
         return region_coordinates
     
@@ -274,7 +268,9 @@ class Image_Analyze(object):
         
         return len(item)
     
-    def IBoundary(self,thresh_ocr):
+    def IBoundary(self,Thresh_OCR):
+        
+        thresh_ocr = Thresh_OCR
         
         kernel_dilate_reg = self.kernel_dilate_reg
         
@@ -295,22 +291,8 @@ class Image_Analyze(object):
             box_diff = abs(len(region_coordinates_prev)-len(region_coordinates_new))
             
             region_coordinates_prev = region_coordinates_new
-            
-         
-        for i in range(len(region_coordinates)):
-                
-                x1 = region_coordinates[i][0]
-                y1 = region_coordinates[i][1]
-                x2 = region_coordinates[i][2]
-                y2 = region_coordinates[i][3]
-                
-                box_b =  np.int0([[x1,y1],[x2,y1],[x2,y2],[x1,y2]]) 
-                
-                cv2.drawContours(thresh_ocr, [box_b], -1, (0, 0, 0), 1)    
-                
-        cv2.imshow('',thresh_ocr)
-        cv2.waitKey()
-        
+
+                       
         box_coordinates = region_coordinates_prev
         
         group_coordinates = []
@@ -386,6 +368,8 @@ class Image_OCR(object):
         if len(OCR_string_processed)>0 and training_flag is True:
         
             cv2.imwrite('Sample\\'+save_path+'\\'+OCR_string_processed+'.png',crop_img)
+            
+        cv2.imwrite('Sample\\'+str(x1m)+'.png',crop_img)
                        
         return OCR_string_processed, region_coordinates
    
@@ -903,10 +887,6 @@ class Tesseract_Training(object):
             
            
 ###############################################################################      
-
-
-
-
 
 ###############################################################################
 #

@@ -45,9 +45,9 @@ if __name__ == '__main__':
     
     kernel_dilate_reg_group=kernel_dilate_reg2  
     
-    scale_group=[0.10,0.25]
+    scale_group=[0.15,0.25]
     
-    Action_Sequence =[['MB1', 'Strength'], ['MB1', 'Compression (SC)'], ['MB1', 'Meshing']]
+    Action_Sequence =[['MB1', 'Stress-Strain (H)'], ['MB1', 'Compression (SC)'], ['MB1', 'Meshing']]
     
     title = ['Isotropic Material','Isotropic Material','Preferences']
     
@@ -59,7 +59,7 @@ if __name__ == '__main__':
 
     #optimize_index = ST.HyPara_Optimize('Simcenter 12',segmentation_threshold_group,kernel_dilate_reg_group,kernel_dilate_box_group,scale_group).IGrid_Search()
 
-    for i in range(2):
+    for i in range(1):
     
         ST.Search_Engine(title[i],Action_Sequence[i],segmentation_threshold_group,kernel_dilate_reg_group,scale_group).IOperate()  
         
