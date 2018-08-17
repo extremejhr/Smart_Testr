@@ -127,8 +127,11 @@ Ibuprofen Ура!!!
    
    Smart-Testr is still a little baby, there are so many drawbacks and errors in this program:Low efficiency, inacurrate OCR location, the theme color and layout have big influence... So much works need to be done. I hope Smart-Testr could have a little help to testrs in future.
    
-   
-  
+17.08.2018 version 0.0.0.1.final:
+
+1. Current developing process stop until the testing works finished;
+2. New idea: WorkerJ - Our computer collegue/staff, AI tester. More general testing, project testing. Self-learning. Maybe more useful and innovational.
+3. Peace and Love!
    
    
    
