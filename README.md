@@ -133,7 +133,12 @@ Ibuprofen Ура!!!
 2. New idea: WorkerJ - Our computer collegue/staff, AI tester. More general testing, project testing. Self-learning. Maybe more useful and innovational.
 3. Peace and Love!
    
-   
+ 13.09.2018 version 0.0.0.2:
+
+1. New version development is starting!!!!!!!!yeah!!!!!!!
+2. To Finish input user interface;
+3. Increase code structure and efficiency.
+4. To my best I think :)  
    
    
         
