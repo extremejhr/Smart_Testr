@@ -139,6 +139,12 @@ Ibuprofen Ура!!!
 2. To Finish input user interface;
 3. Increase code structure and efficiency.
 4. To my best I think :)  
+
+Important new ideas for version 0.0.0.2:
+1. Anchor point select for regions calibration. 
+2. Separate the region into different areas in order to increase searching efficiency and stability.
+3. The Library class need to be divided into several files.
+4. Optimize code structure.
    
    
         
