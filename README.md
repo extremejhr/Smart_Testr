@@ -146,5 +146,8 @@ Important new ideas for version 0.0.0.2:
 3. The Library class need to be divided into several files.
 4. Optimize code structure.
    
-   
+
+11.03.2019 Version 0.0.0.3 (New Version start to develop! Yep!)
+
+New Image Segmentation Algorithm is applied (Screen_Scissor) to avoid the image processsing instability.
         
