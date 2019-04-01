@@ -150,4 +150,9 @@ Important new ideas for version 0.0.0.2:
 11.03.2019 Version 0.0.0.3 (New Version start to develop! Yep!)
 
 New Image Segmentation Algorithm is applied (Screen_Scissor) to avoid the image processsing instability.
-        
+
+01.04.2019 Version 0.0.0.3
+
+Finished the basic structure. More stable than version 0.0.0.2.
+
+Add OCR_Space method to OCR on Cloud.
