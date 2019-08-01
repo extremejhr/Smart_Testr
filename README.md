@@ -147,7 +147,7 @@ Important new ideas for version 0.0.0.2:
 4. Optimize code structure.
    
 
-11.03.2019 Version 0.0.0.3 (New Version start to develop! Yep!)
+11.03.2019 Version 0.0.0.3 (New Version start to develop)
 
 New Image Segmentation Algorithm is applied (Screen_Scissor) to avoid the image processsing instability.
 
@@ -156,3 +156,7 @@ New Image Segmentation Algorithm is applied (Screen_Scissor) to avoid the image 
 Finished the basic structure. More stable than version 0.0.0.2.
 
 Add OCR_Space method to OCR on Cloud.
+
+01.08.2019 Version 1.0 (based on development version 0.0.0.3, ideas in version 0.0.0.2 have been realized)
+
+Smart Tester 1.0 is published. Added input file complier and Template Matching for icon.
