@@ -1,0 +1,75 @@
+#Record autotest for Time to FTT tool
+
+@[Ribbon_UP] => [MB1] -> [Internal]
+
+@[Ribbon_DOWN] => [MB1] -> [Record Autotest]
+
+@[Autotest Record] => [RINPUT] -> [File Name] = [rs_functl_time_to_ftt_overwrite.py]
+
+AND [PRESS] = [enter]
+
+AND [PRESS] = [escape]
+
+@[Ribbon_UP] => [MB1] -> [File]
+
+>> [MB1] -> [Open]
+
+@[Open] => [RINPUT] -> [File Name] = [C:\Users\xqk9qq\Desktop\Smart_Tester\test_sim\demo_sim.sim]
+
+AND [PRESS] = [enter]
+
+WAIT 3
+
+@[Left_Border] => [MB1] -> [XY Function Navigator]
+
+@[Navigator] => [DMB1] -> [<Function Navigator>demo_sim]
+
+AND [MB3] -> [response_time]
+
+>> [MB1] -> [Load]
+
+@[Navigator] => [DMB1] -> [response_time]
+
+AND [MB1] -> [record_time]
+
+@[Ribbon_Up] => [MB1] -> [Response Dynamics]
+
+@[Ribbon_Down] => [MB1] -> [Function Toolkit]
+
+>> [MB1] -> [Time to FFT]
+
+WAIT 3
+
+@[Time to FFT Conversion] => [MB1] -> [Add]
+
+AND [MB1] -> [record_time]
+
+AND [MB1] -> [Overwrite]
+
+AND [PRESS] = [enter]
+
+@[Navigator] => [MB3] -> [record_time]
+
+>> [MB1] -> [Export]
+
+WAIT 3
+
+@[Export File] => [BINPUT] -> [Destination File] = [CaeTest_rs_functl_time_to_ftt_overwrite_jat--master.csv]
+
+AND [MB2]
+
+@[Ribbon_UP] => [MB1] -> [Internal]
+
+@[Ribbon_DOWN] => [MB1] -> [Stop Autotest Recording]
+
+@[Quick_Access] => [MB1] -> [Menu]
+
+>> [MB1] -> [File]
+
+>> [MB1] -> [Close]
+
+>> [MB1] -> [All Parts]
+
+@[Close All Files] => [PRESS] = [enter]
+
+FINISH
